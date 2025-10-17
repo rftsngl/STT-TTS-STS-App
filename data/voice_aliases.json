@@ -1,0 +1,18 @@
+{
+  "aliases": [
+    {
+      "alias": "Rifati",
+      "voice_id": "U0XZLUG1Fp4wiCDd6Rnw",
+      "name": "Rıfat Sins",
+      "source": "ivc",
+      "created_at": "2025-10-16T15:22:28.506125+00:00"
+    },
+    {
+      "alias": "selcuk",
+      "voice_id": "tIIp3M3iUQkERyUGUopr",
+      "name": "Selck deneme",
+      "source": "ivc",
+      "created_at": "2025-10-17T17:48:35.216659+00:00"
+    }
+  ]
+}

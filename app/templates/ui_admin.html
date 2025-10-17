@@ -1,0 +1,4671 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <title>Speech Stack - Kontrol Paneli</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🎤</text></svg>">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.css">
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-card: #1e293b;
+      --bg-hover: #334155;
+      --border: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #06b6d4;
+      --sidebar-width: 260px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--bg-hover);
+    }
+
+    /* Layout */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+      width: 100%;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-header p {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 16px 0;
+    }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      padding: 0 20px 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: var(--bg-hover);
+      color: var(--accent);
+      border-left-color: var(--accent);
+    }
+
+    .nav-item i {
+      width: 20px;
+      height: 20px;
+      stroke-width: 2;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      width: calc(100% - var(--sidebar-width));
+      overflow-x: hidden;
+    }
+
+    .topbar {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      min-height: 60px;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .api-keys-form {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .api-keys-form input {
+      padding: 8px 12px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+      width: 200px;
+      flex-shrink: 0;
+    }
+
+    .api-keys-form input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .page-content {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .page-subtitle {
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-body {
+      color: var(--text-secondary);
+    }
+
+    .grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+
+    .grid-4 {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    /* Stat Card */
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .stat-icon.success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+    .stat-icon.warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+    .stat-icon.danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+    .stat-icon.info { background: rgba(6, 182, 212, 0.1); color: var(--info); }
+    .stat-icon.primary { background: rgba(59, 130, 246, 0.1); color: var(--accent); }
+
+    /* Buttons */
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--border);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .form-control::placeholder {
+      color: var(--text-muted);
+    }
+
+    select.form-control {
+      cursor: pointer;
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 100px;
+      font-family: 'Courier New', monospace;
+    }
+
+    input[type="file"] {
+      padding: 8px;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--bg-primary);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    td {
+      color: var(--text-secondary);
+    }
+
+    tr:hover {
+      background: var(--bg-hover);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+    .badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+    .badge-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+    .badge-info { background: rgba(6, 182, 212, 0.1); color: var(--info); }
+    .badge-primary { background: rgba(59, 130, 246, 0.1); color: var(--accent); }
+
+    /* Recording Controls */
+    .recording-controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .recording-controls .btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      padding: 8px 12px;
+    }
+
+    .recording-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--danger);
+      font-weight: 500;
+    }
+
+    .recording-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--danger);
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+
+    .recording-timer {
+      font-family: 'Courier New', monospace;
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--text);
+      background: rgba(0, 0, 0, 0.1);
+      padding: 8px 12px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .recorded-files {
+      margin-top: 16px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .recorded-file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      margin: 8px 0;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .recorded-file-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .recorded-file-name {
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .recorded-file-duration {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .recorded-file-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .recorded-file-actions .btn {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+
+    /* Voice Labels */
+    .voice-labels {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .label-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .label-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .label-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label-small {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .label-field .form-control {
+      font-size: 14px;
+      padding: 8px 12px;
+    }
+
+    @media (max-width: 768px) {
+      .label-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+    }
+
+    /* Clone Success Card */
+    .clone-success-card {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+      border: 2px solid rgba(16, 185, 129, 0.3);
+      border-radius: 16px;
+      padding: 32px;
+      text-align: center;
+      margin: 20px 0;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .success-header {
+      margin-bottom: 32px;
+    }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--success), var(--accent));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      animation: pulse-success 2s infinite;
+    }
+
+    .success-icon i {
+      width: 40px;
+      height: 40px;
+      color: white;
+    }
+
+    @keyframes pulse-success {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .success-header h3 {
+      color: var(--success);
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+    }
+
+    .success-subtitle {
+      color: var(--text-muted);
+      font-size: 16px;
+      margin: 0;
+    }
+
+    .success-details {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .detail-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .detail-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .detail-label i {
+      width: 16px;
+      height: 16px;
+    }
+
+    .detail-value {
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .voice-id {
+      font-family: 'Courier New', monospace;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .success-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+
+    .success-actions .btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      font-weight: 500;
+    }
+
+    .success-tips {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: left;
+    }
+
+    .success-tips h4 {
+      color: var(--text);
+      font-size: 16px;
+      margin: 0 0 12px 0;
+    }
+
+    .success-tips ul {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--text-muted);
+    }
+
+    .success-tips li {
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+      .clone-success-card {
+        padding: 20px;
+        margin: 10px 0;
+      }
+      
+      .success-header h3 {
+        font-size: 24px;
+      }
+      
+      .success-details {
+        grid-template-columns: 1fr;
+        padding: 16px;
+      }
+      
+      .success-actions {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .success-actions .btn {
+        width: 100%;
+        max-width: 200px;
+      }
+    }
+
+    /* Alert */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      max-width: 90%;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
+      opacity: 1;
+    }
+
+    .alert-close {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      padding: 4px;
+      margin-left: auto;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+    }
+
+    .alert-close:hover {
+      opacity: 1;
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .alert-close i {
+      width: 16px;
+      height: 16px;
+    }
+
+    .alert-success {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--success);
+    }
+
+    .alert-warning {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: var(--warning);
+    }
+
+    .alert-danger {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+    }
+
+    .alert-info {
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      color: var(--info);
+    }
+
+    /* Login Page Styles */
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .login-header p {
+      color: var(--text-secondary);
+      font-size: 16px;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .form-group input {
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .login-info {
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .login-info p {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    /* Loading animation */
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+      
+      .topbar-left {
+        flex: none;
+      }
+      
+      .api-keys-form {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .api-keys-form input {
+        width: 100%;
+      }
+    }
+
+    /* Code */
+    pre {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    code {
+      background: var(--bg-primary);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: var(--accent);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      padding: 12px 20px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      color: var(--text-primary);
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Loading */
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Utilities */
+    .hidden { display: none !important; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-2 { gap: 8px; }
+    .gap-4 { gap: 16px; }
+    .mt-2 { margin-top: 8px; }
+    .mt-4 { margin-top: 16px; }
+    .mb-2 { margin-bottom: 8px; }
+    .mb-4 { margin-bottom: 16px; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s;
+        z-index: 1000;
+      }
+
+      .sidebar.mobile-open {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .grid-2, .grid-3, .grid-4 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Audio Player */
+    .audio-player {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .audio-player audio {
+      flex: 1;
+      height: 40px;
+    }
+
+    /* Voice Card */
+    .voice-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: border-color 0.2s;
+    }
+
+    .voice-card:hover {
+      border-color: var(--accent);
+    }
+
+    .voice-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .voice-card-title {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .voice-card-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .voice-card-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* Footer Status Bar */
+    .footer-bar {
+      background: var(--bg-secondary);
+      border-top: 2px solid var(--success);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      position: sticky;
+      bottom: 0;
+      z-index: 100;
+    }
+
+    .footer-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .footer-item i {
+      width: 14px;
+      height: 14px;
+    }
+
+    .footer-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Health and Metrics Info Styles */
+    .health-info, .metrics-info {
+      padding: 0;
+    }
+
+    .info-section {
+      margin-bottom: 24px;
+      padding: 16px;
+      background: rgba(51, 65, 85, 0.3);
+      border-radius: 8px;
+      border: 1px solid rgba(51, 65, 85, 0.5);
+    }
+
+    .info-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .info-section h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .info-section h5 {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .info-value {
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .status-ok {
+      color: var(--success) !important;
+    }
+
+    .status-warning {
+      color: var(--warning) !important;
+    }
+
+    .status-error {
+      color: var(--danger) !important;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .feature-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: rgba(51, 65, 85, 0.2);
+      border-radius: 6px;
+      border: 1px solid rgba(51, 65, 85, 0.3);
+    }
+
+    .feature-name {
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .feature-status {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .feature-status.status-ok {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+    }
+
+    .feature-status.status-error {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--danger);
+    }
+
+    .metrics-subsection {
+      margin-top: 16px;
+      padding: 12px;
+      background: rgba(51, 65, 85, 0.2);
+      border-radius: 6px;
+      border: 1px solid rgba(51, 65, 85, 0.3);
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .metric-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px;
+      background: rgba(51, 65, 85, 0.3);
+      border-radius: 4px;
+    }
+
+    .metric-label {
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .small-text {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .no-data {
+      text-align: center;
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 24px;
+    }
+
+    .error-message {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.1);
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      text-align: center;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h1>
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="22"></line>
+          </svg>
+          Speech Stack
+        </h1>
+        <p>Kontrol Paneli v2.0</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Ana Menu</div>
+          <a class="nav-item active" data-page="dashboard">
+            <i data-feather="home"></i>
+            <span>Dashboard</span>
+          </a>
+          <a class="nav-item" data-page="voices">
+            <i data-feather="mic"></i>
+            <span>Ses Stüdyosu</span>
+          </a>
+          <a class="nav-item" data-page="playground">
+            <i data-feather="play-circle"></i>
+            <span>API Playground</span>
+          </a>
+          <a class="nav-item" data-page="subscription">
+            <i data-feather="credit-card"></i>
+            <span>Abonelik & Kota</span>
+          </a>
+    </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Yönetim</div>
+          <a class="nav-item" data-page="history">
+            <i data-feather="clock"></i>
+            <span>Kullanım Geçmişi</span>
+          </a>
+          <a class="nav-item" data-page="terms">
+            <i data-feather="book"></i>
+            <span>Terimler</span>
+          </a>
+          <a class="nav-item" data-page="monitoring">
+            <i data-feather="activity"></i>
+            <span>Monitoring</span>
+          </a>
+      </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">Ayarlar</div>
+          <a class="nav-item" data-page="settings">
+            <i data-feather="settings"></i>
+            <span>Yapılandırma</span>
+          </a>
+          <a class="nav-item" data-page="security">
+            <i data-feather="shield"></i>
+            <span>Güvenlik</span>
+          </a>
+          <a class="nav-item" data-page="resilience">
+            <i data-feather="zap"></i>
+            <span>Dayanıklılık</span>
+          </a>
+    </div>
+    </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Topbar -->
+      <div class="topbar">
+        <div class="topbar-left">
+          <div class="api-keys-form">
+            <input type="password" id="elevenlabs-key-input" placeholder="ElevenLabs API Key (sk_...)" />
+            <button class="btn btn-primary btn-sm" id="save-keys-btn">
+              <i data-feather="save"></i>
+              ElevenLabs Key Kaydet
+            </button>
+            <button class="btn btn-secondary btn-sm" id="logout-btn">
+              <i data-feather="log-out"></i>
+              Çıkış
+            </button>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <span id="status-indicator" class="badge badge-success">
+            <i data-feather="check-circle" style="width: 12px; height: 12px; margin-right: 4px;"></i>
+            Çevrimiçi
+          </span>
+        </div>
+      </div>
+
+      <!-- Page Content -->
+      <div class="page-content">
+        <!-- Login Page -->
+        <div class="page" id="page-login">
+          <div class="login-container">
+            <div class="login-card">
+              <div class="login-header">
+                <h1>🎤 Speech Stack</h1>
+                <p>Kontrol Paneli</p>
+              </div>
+              <div class="login-form">
+                <div class="form-group">
+                  <label for="login-api-key">ElevenLabs API Key</label>
+                  <input type="password" id="login-api-key" placeholder="ElevenLabs API key'inizi girin (sk_...)" value="sk_64a1a5c52372e5b985871e259b512dd5206281e9433e3235" />
+                </div>
+                <button class="btn btn-primary btn-lg" id="login-btn">
+                  <i data-feather="log-in"></i>
+                  Giriş Yap
+                </button>
+                <div class="login-info">
+                  <p>ElevenLabs API key'inizi bilmiyorsanız, <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank">buradan</a> alabilirsiniz.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Page -->
+        <div class="page hidden" id="page-dashboard">
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-subtitle">Sistem durumu ve hızlı erişim</p>
+          
+          <div class="alert alert-info" style="margin-bottom: 24px;">
+            <i data-feather="info"></i>
+            <div>
+              <strong>Güncelleme:</strong> Admin işlevselliği artık API key ile erişilebilir. Tüm yönetim işlemleri için sadece API key yeterlidir.
+            </div>
+          </div>
+          
+          <div class="alert alert-info" style="margin-bottom: 24px;">
+            <i data-feather="info"></i>
+            <div>
+              <strong>API Key Yönetimi:</strong> Üst kısımdan sistem API key'inizi ve ElevenLabs API key'inizi yönetebilirsiniz. Tüm işlevler API key ile erişilebilir.
+            </div>
+          </div>
+
+          <div class="grid grid-4">
+            <div class="stat-card">
+              <div class="stat-icon success">
+                <i data-feather="activity"></i>
+          </div>
+              <div class="stat-label">Sistem Durumu</div>
+              <div class="stat-value" id="health-status">-</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon primary">
+                <i data-feather="mic"></i>
+          </div>
+              <div class="stat-label">Toplam Sesler</div>
+              <div class="stat-value" id="total-voices">0</div>
+        </div>
+
+            <div class="stat-card">
+              <div class="stat-icon info">
+                <i data-feather="book"></i>
+            </div>
+              <div class="stat-label">Terimler</div>
+              <div class="stat-value" id="total-terms">0</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon warning">
+                <i data-feather="cpu"></i>
+              </div>
+              <div class="stat-label">STT Cihazı</div>
+              <div class="stat-value" id="stt-device">-</div>
+            </div>
+          </div>
+
+          <div class="grid grid-2 mt-4">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-feather="info"></i>
+                  Sistem Bilgisi
+                </div>
+                <button class="btn btn-secondary btn-sm" id="refresh-health-btn">
+                  <i data-feather="refresh-cw"></i>
+                  Yenile
+                </button>
+              </div>
+              <div class="card-body">
+                <pre id="health-output">Yükleniyor...</pre>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-feather="trending-up"></i>
+                  Son Metrikler
+                </div>
+                <button class="btn btn-secondary btn-sm" id="refresh-metrics-btn">
+                  <i data-feather="refresh-cw"></i>
+                  Yenile
+                </button>
+              </div>
+              <div class="card-body">
+                <pre id="metrics-output">Yükleniyor...</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Voice Studio Page -->
+        <div class="page hidden" id="page-voices">
+          <h1 class="page-title">Ses Stüdyosu</h1>
+          <p class="page-subtitle">ElevenLabs seslerinizi yönetin</p>
+
+          <div class="tabs">
+            <button class="tab active" data-tab="voices-list">Seslerim</button>
+            <button class="tab" data-tab="voice-clone">Ses Klonla</button>
+            <button class="tab" data-tab="voice-aliases">Alias Yönetimi</button>
+            <button class="tab" data-tab="audio-isolation">Audio Isolation</button>
+          </div>
+
+          <!-- Voices List Tab -->
+          <div class="tab-content active" id="tab-voices-list">
+            <div class="flex justify-between items-center mb-4">
+              <button class="btn btn-primary" id="refresh-voices-btn">
+                <i data-feather="refresh-cw"></i>
+                Sesleri Yenile
+              </button>
+              <button class="btn btn-danger" id="delete-all-clones-btn">
+                <i data-feather="trash-2"></i>
+                Tüm Klonları Sil
+              </button>
+            </div>
+
+            <div id="voices-grid" class="grid grid-3">
+              <!-- Voices will be populated here -->
+            </div>
+          </div>
+
+          <!-- Voice Clone Tab -->
+          <div class="tab-content" id="tab-voice-clone">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-feather="mic"></i>
+                  Yeni Ses Klonla
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="alert alert-info">
+                  <i data-feather="info"></i>
+                  <div>
+                    <strong>Gereksinimler:</strong> En az 1 dakikalık temiz, gürültüsüz ses kaydı. 
+                    Daha iyi sonuçlar için 3-5 dakikalık çeşitli tonlamalarda konuşma önerilir.
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">İsim</label>
+                  <input type="text" class="form-control" id="clone-name" placeholder="Örn: Ahmet Yılmaz" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Takma Ad</label>
+                  <input type="text" class="form-control" id="clone-alias" placeholder="Örn: ahmet" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Açıklama (Opsiyonel)</label>
+                  <textarea class="form-control" id="clone-description" placeholder="Sesiniz hakkında notlar..." rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Ses Etiketleri (Opsiyonel)</label>
+                  <div class="voice-labels">
+                    <div class="label-row">
+                      <div class="label-field">
+                        <label class="form-label-small">Dil</label>
+                        <select class="form-control" id="clone-language">
+                          <option value="">Seçin</option>
+                          <option value="en">İngilizce</option>
+                          <option value="tr">Türkçe</option>
+                          <option value="es">İspanyolca</option>
+                          <option value="fr">Fransızca</option>
+                          <option value="de">Almanca</option>
+                          <option value="it">İtalyanca</option>
+                          <option value="pt">Portekizce</option>
+                          <option value="ru">Rusça</option>
+                          <option value="ja">Japonca</option>
+                          <option value="ko">Korece</option>
+                          <option value="zh">Çince</option>
+                          <option value="ar">Arapça</option>
+                        </select>
+                      </div>
+                      <div class="label-field">
+                        <label class="form-label-small">Aksan</label>
+                        <select class="form-control" id="clone-accent">
+                          <option value="">Seçin</option>
+                          <option value="american">Amerikan</option>
+                          <option value="british">İngiliz</option>
+                          <option value="australian">Avustralya</option>
+                          <option value="canadian">Kanada</option>
+                          <option value="neutral">Nötr</option>
+                          <option value="regional">Bölgesel</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="label-row">
+                      <div class="label-field">
+                        <label class="form-label-small">Cinsiyet</label>
+                        <select class="form-control" id="clone-gender">
+                          <option value="">Seçin</option>
+                          <option value="male">Erkek</option>
+                          <option value="female">Kadın</option>
+                          <option value="neutral">Nötr</option>
+                        </select>
+                      </div>
+                      <div class="label-field">
+                        <label class="form-label-small">Yaş</label>
+                        <select class="form-control" id="clone-age">
+                          <option value="">Seçin</option>
+                          <option value="young">Genç (18-25)</option>
+                          <option value="adult">Yetişkin (26-40)</option>
+                          <option value="middle">Orta Yaş (41-60)</option>
+                          <option value="senior">Yaşlı (60+)</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="label-row">
+                      <div class="label-field">
+                        <label class="form-label-small">Ses Tonu</label>
+                        <select class="form-control" id="clone-tone">
+                          <option value="">Seçin</option>
+                          <option value="calm">Sakin</option>
+                          <option value="energetic">Enerjik</option>
+                          <option value="professional">Profesyonel</option>
+                          <option value="friendly">Dostane</option>
+                          <option value="authoritative">Otoriter</option>
+                          <option value="warm">Sıcak</option>
+                          <option value="serious">Ciddi</option>
+                          <option value="playful">Eğlenceli</option>
+                        </select>
+                      </div>
+                      <div class="label-field">
+                        <label class="form-label-small">Kullanım Alanı</label>
+                        <select class="form-control" id="clone-use-case">
+                          <option value="">Seçin</option>
+                          <option value="narration">Anlatım</option>
+                          <option value="commercial">Reklam</option>
+                          <option value="educational">Eğitim</option>
+                          <option value="entertainment">Eğlence</option>
+                          <option value="news">Haber</option>
+                          <option value="podcast">Podcast</option>
+                          <option value="audiobook">Sesli Kitap</option>
+                          <option value="voiceover">Seslendirme</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Ses Dosyaları (Maksimum 3)</label>
+                  <input type="file" class="form-control" id="clone-files" accept="audio/*" multiple />
+                  <div class="file-status" style="margin-top: 8px; font-size: 14px; color: var(--text-muted);">Dosya seçilmedi</div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Mikrofon ile Kayıt</label>
+                  <div class="recording-controls">
+                    <button type="button" class="btn btn-outline-danger" id="record-btn" disabled>
+                      <i data-feather="mic"></i> Kayıt Başlat
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" id="stop-record-btn" disabled>
+                      <i data-feather="square"></i> Kayıt Durdur
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="play-recorded-btn" disabled>
+                      <i data-feather="play"></i> Oynat
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" id="add-recorded-btn" disabled>
+                      <i data-feather="plus"></i> Kayıt Ekle
+                    </button>
+                  </div>
+                  <div class="recording-status mt-2">
+                    <div class="recording-indicator" id="recording-indicator" style="display: none;">
+                      <div class="recording-dot"></div>
+                      <span>Kayıt yapılıyor...</span>
+                    </div>
+                    <div class="recording-timer" id="recording-timer" style="display: none;">
+                      <span id="timer-display">00:00</span>
+                    </div>
+                  </div>
+                  <div class="recorded-files" id="recorded-files-list" style="display: none;">
+                    <h6>Kaydedilen Dosyalar:</h6>
+                    <div id="recorded-files-container"></div>
+                  </div>
+                </div>
+
+                <button class="btn btn-success" id="clone-submit-btn">
+                  <i data-feather="upload"></i>
+                  Sesi Klonla
+                </button>
+
+                <div id="clone-output" class="mt-4"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Voice Aliases Tab -->
+          <div class="tab-content" id="tab-voice-aliases">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-feather="tag"></i>
+                  Alias Listesi
+                </div>
+                <button class="btn btn-secondary btn-sm" id="refresh-aliases-btn">
+                  <i data-feather="refresh-cw"></i>
+                  Yenile
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="table-container">
+            <table>
+              <thead>
+                      <tr>
+                        <th>Alias</th>
+                        <th>Ses ID</th>
+                        <th>İsim</th>
+                        <th>Kaynak</th>
+                        <th>İşlemler</th>
+                      </tr>
+              </thead>
+                    <tbody id="aliases-tbody">
+                      <tr>
+                        <td colspan="5" class="text-center">Yükleniyor...</td>
+                      </tr>
+                    </tbody>
+            </table>
+            </div>
+          </div>
+            </div>
+          </div>
+
+          <!-- Audio Isolation Tab -->
+          <div class="tab-content" id="tab-audio-isolation">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-feather="edit-3"></i>
+                  Audio Isolation (Ses Ayrıştırma)
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Ses Dosyası</label>
+                  <input type="file" class="form-control" id="isolation-file" accept="audio/*" />
+                  <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                    Desteklenen formatlar: WAV, MP3, FLAC, OGG, M4A (Max: 50MB)
+                  </div>
+                </div>
+
+                <div class="grid grid-3">
+                  <div class="form-group">
+                    <label class="form-label">İşlem Türü</label>
+                    <select class="form-control" id="isolation-type">
+                      <option value="voice_enhancement" selected>Ses İyileştirme</option>
+                      <option value="noise_reduction">Gürültü Giderme</option>
+                      <option value="vocal_isolation">Vokal Ayrıştırma</option>
+                      <option value="instrumental_isolation">Enstrümantal Ayrıştırma</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Gürültü Azaltma</label>
+                    <select class="form-control" id="noise-reduction">
+                      <option value="low">Düşük</option>
+                      <option value="medium">Orta</option>
+                      <option value="high" selected>Yüksek</option>
+                      <option value="off">Kapalı</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Çıktı Formatı</label>
+                    <select class="form-control" id="output-format">
+                      <option value="wav" selected>WAV</option>
+                      <option value="mp3">MP3</option>
+                      <option value="flac">FLAC</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <button class="btn btn-primary" id="isolation-submit-btn">
+                    <i data-feather="play"></i>
+                    Ses İşlemesini Başlat
+                  </button>
+                  <button class="btn btn-secondary" id="isolation-reset-btn">
+                    <i data-feather="rotate-ccw"></i>
+                    Sıfırla
+                  </button>
+                </div>
+
+                <!-- İşlem Sonuçları -->
+                <div id="isolation-output" style="margin-top: 16px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- API Playground Page -->
+        <div class="page hidden" id="page-playground">
+          <h1 class="page-title">API Playground</h1>
+          <p class="page-subtitle">API endpoint'lerini test edin</p>
+
+          <div class="tabs">
+            <button class="tab active" data-tab="playground-tts">TTS</button>
+            <button class="tab" data-tab="playground-stt">STT</button>
+            <button class="tab" data-tab="playground-speak">Speak Chain</button>
+          </div>
+
+          <!-- TTS Tab -->
+          <div class="tab-content active" id="tab-playground-tts">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-feather="volume-2"></i>
+                  Text-to-Speech
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Metin</label>
+                  <textarea class="form-control" id="tts-text" placeholder="Seslendirilecek metin..." rows="4">Merhaba, bu bir test mesajıdır.</textarea>
+                </div>
+
+                <div class="grid grid-2">
+                  <div class="form-group">
+                    <label class="form-label">Ses Seçin</label>
+                    <select class="form-control" id="tts-voice-select">
+                      <option value="">-- Ses Seçin --</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Veya Manuel ID</label>
+                    <input type="text" class="form-control" id="tts-voice-manual" placeholder="ElevenLabs voice ID (opsiyonel)" />
+                  </div>
+                </div>
+
+                <details style="margin-top: 16px; margin-bottom: 16px;">
+                  <summary style="cursor: pointer; font-weight: 600; color: var(--accent); margin-bottom: 12px;">
+                    Gelişmiş Ayarlar (Voice Settings)
+                  </summary>
+                  
+                  <div class="grid grid-2" style="margin-top: 12px;">
+                    <div class="form-group">
+                      <label class="form-label">Stability (0-1)</label>
+                      <input type="range" class="form-control" id="tts-stability" min="0" max="1" step="0.05" value="0.5" 
+                             oninput="document.getElementById('stability-value').textContent = this.value" />
+                      <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                        Değer: <span id="stability-value">0.5</span>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Similarity Boost (0-1)</label>
+                      <input type="range" class="form-control" id="tts-similarity" min="0" max="1" step="0.05" value="0.75"
+                             oninput="document.getElementById('similarity-value').textContent = this.value" />
+                      <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                        Değer: <span id="similarity-value">0.75</span>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Style (0-1)</label>
+                      <input type="range" class="form-control" id="tts-style" min="0" max="1" step="0.05" value="0" 
+                             oninput="document.getElementById('style-value').textContent = this.value" />
+                      <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                        Değer: <span id="style-value">0</span>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Speaker Boost</label>
+                      <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="tts-speaker-boost" />
+                        <span>Aktif</span>
+                      </label>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Optimize Streaming Latency (0-4)</label>
+                      <input type="number" class="form-control" id="tts-optimize-latency" min="0" max="4" step="1" placeholder="Opsiyonel (varsayılan: 0)" />
+                      <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                        Daha düşük gecikme için ayarlanabilir (0-4 arası)
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">Voice Consistency</label>
+                      <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="tts-voice-consistency" />
+                        <span>Aktif (Daha tutarlı ses)</span>
+                      </label>
+                    </div>
+                  </div>
+                </details>
+
+                <button class="btn btn-primary" id="tts-submit-btn">
+                  <i data-feather="play"></i>
+                  Seslendir
+                </button>
+
+                <div id="tts-output" class="mt-4"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- STT Tab -->
+          <div class="tab-content" id="tab-playground-stt">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-feather="mic"></i>
+                  Speech-to-Text
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Ses Kaynağı</label>
+                  <div class="flex gap-2">
+                    <button class="btn btn-secondary" id="stt-file-btn">
+                      <i data-feather="upload"></i>
+                      Dosya Yükle
+                    </button>
+                    <button class="btn btn-success" id="stt-mic-btn">
+                      <i data-feather="mic"></i>
+                      Mikrofon Kaydı
+                    </button>
+                  </div>
+                  <input type="file" class="form-control mt-2" id="stt-file" accept="audio/*" style="display: none;" />
+                </div>
+
+                <div class="grid grid-2">
+                  <div class="form-group">
+                    <label class="form-label">Dil</label>
+                    <select class="form-control" id="stt-language">
+                      <option value="tr">Türkçe</option>
+                      <option value="en">English</option>
+                      <option value="de">Deutsch</option>
+                      <option value="es">Español</option>
+                      <option value="fr">Français</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Zaman Damgaları</label>
+                    <select class="form-control" id="stt-timestamps">
+                      <option value="segments">Segmentler</option>
+                      <option value="words">Kelimeler</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button class="btn btn-primary" id="stt-submit-btn">
+                  <i data-feather="upload"></i>
+                  Çevir
+                </button>
+
+                <div id="stt-output" class="mt-4"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Speak Chain Tab -->
+          <div class="tab-content" id="tab-playground-speak">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-feather="repeat"></i>
+                  STT + TTS Chain
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="alert alert-info">
+                  <i data-feather="info"></i>
+                  <div>Ses dosyasını metne çevirir, sonra seçtiğiniz sesle tekrar seslendirir.</div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Ses Kaynağı</label>
+                  <div class="flex gap-2">
+                    <button class="btn btn-secondary" id="speak-file-btn">
+                      <i data-feather="upload"></i>
+                      Dosya Yükle
+                    </button>
+                    <button class="btn btn-success" id="speak-mic-btn">
+                      <i data-feather="mic"></i>
+                      Mikrofon Kaydı
+                    </button>
+                  </div>
+                  <input type="file" class="form-control mt-2" id="speak-file" accept="audio/*" style="display: none;" />
+                </div>
+
+                <div class="grid grid-2">
+                  <div class="form-group">
+                    <label class="form-label">Hedef Ses Seçin</label>
+                    <select class="form-control" id="speak-voice-select">
+                      <option value="">-- Ses Seçin --</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label">Veya Manuel ID</label>
+                    <input type="text" class="form-control" id="speak-voice-manual" placeholder="ElevenLabs voice ID (opsiyonel)" />
+                  </div>
+                </div>
+
+                <button class="btn btn-primary" id="speak-submit-btn">
+                  <i data-feather="repeat"></i>
+                  İşle
+                </button>
+
+                <div id="speak-output" class="mt-4"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subscription Page -->
+        <div class="page hidden" id="page-subscription">
+          <h1 class="page-title">Abonelik & Kota</h1>
+          <p class="page-subtitle">ElevenLabs kullanım bilgileri</p>
+
+          <div class="flex justify-between items-center mb-4">
+            <button class="btn btn-primary" id="refresh-subscription-btn">
+              <i data-feather="refresh-cw"></i>
+              Yenile
+            </button>
+          </div>
+
+          <div class="grid grid-2">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-feather="user"></i>
+                  Abonelik Detayları
+                </div>
+              </div>
+              <div class="card-body">
+                <pre id="subscription-output">Yükleniyor...</pre>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-feather="pie-chart"></i>
+                  Kota Kullanımı
+                </div>
+              </div>
+              <div class="card-body" id="quota-cards">
+                <p class="text-center">Yükleniyor...</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mt-4">
+            <div class="card-header">
+              <div class="card-title">
+                <i data-feather="list"></i>
+                Mevcut Modeller
+              </div>
+              <button class="btn btn-secondary btn-sm" id="refresh-models-btn">
+                <i data-feather="refresh-cw"></i>
+                Yenile
+              </button>
+            </div>
+            <div class="card-body">
+              <div id="models-grid" class="grid grid-3">
+                <p>Yükleniyor...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- History Page -->
+        <div class="page hidden" id="page-history">
+          <h1 class="page-title">Kullanım Geçmişi</h1>
+          <p class="page-subtitle">ElevenLabs üretim geçmişi</p>
+
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex gap-2">
+              <select class="form-control" id="history-limit" style="width: auto;">
+                <option value="50">Son 50</option>
+                <option value="100" selected>Son 100</option>
+                <option value="200">Son 200</option>
+              </select>
+              <button class="btn btn-primary" id="refresh-history-btn">
+                <i data-feather="refresh-cw"></i>
+                Yenile
+              </button>
+            </div>
+            <button class="btn btn-danger" id="clear-history-btn">
+              <i data-feather="trash-2"></i>
+              Tüm Geçmişi Temizle
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <div class="table-container">
+            <table>
+              <thead>
+                    <tr>
+                      <th>Tarih</th>
+                      <th>Metin</th>
+                      <th>Ses</th>
+                      <th>Karakter</th>
+                      <th>İşlemler</th>
+                    </tr>
+              </thead>
+                  <tbody id="history-tbody">
+                    <tr>
+                      <td colspan="5" class="text-center">Yükleniyor...</td>
+                    </tr>
+                  </tbody>
+            </table>
+            </div>
+          </div>
+        </div>
+            </div>
+
+        <!-- Terms Page -->
+        <div class="page hidden" id="page-terms">
+          <h1 class="page-title">Terim Yönetimi</h1>
+          <p class="page-subtitle">Metin normalizasyon terimleri - API key ile erişilebilir</p>
+
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex gap-2">
+              <button class="btn btn-primary" id="create-term-btn">
+                <i data-feather="plus"></i>
+                Yeni Terim
+              </button>
+              <button class="btn btn-secondary" id="import-terms-btn">
+                <i data-feather="upload"></i>
+                İçe Aktar
+              </button>
+              <button class="btn btn-secondary" id="export-terms-btn">
+                <i data-feather="download"></i>
+                Dışa Aktar
+              </button>
+          </div>
+            <button class="btn btn-secondary" id="refresh-terms-btn">
+              <i data-feather="refresh-cw"></i>
+              Yenile
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <div class="table-container">
+            <table>
+              <thead>
+                    <tr>
+                      <th>Kaynak</th>
+                      <th>Hedef</th>
+                      <th>Tür</th>
+                      <th>Öncelik</th>
+                      <th>İşlemler</th>
+                    </tr>
+              </thead>
+                  <tbody id="terms-tbody">
+                    <tr>
+                      <td colspan="5" class="text-center">Yükleniyor...</td>
+                    </tr>
+                  </tbody>
+            </table>
+          </div>
+            </div>
+            </div>
+          </div>
+
+        <!-- Monitoring Page -->
+        <div class="page hidden" id="page-monitoring">
+          <h1 class="page-title">Monitoring</h1>
+          <p class="page-subtitle">Sistem metrikleri ve loglar</p>
+
+          <div class="tabs">
+            <button class="tab active" data-tab="mon-metrics">Metrikler</button>
+            <button class="tab" data-tab="mon-logs">Loglar</button>
+            <button class="tab" data-tab="mon-circuit">Circuit Breaker</button>
+          </div>
+
+          <!-- Metrics Tab -->
+          <div class="tab-content active" id="tab-mon-metrics">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-feather="bar-chart-2"></i>
+                  Son 5 Dakika Metrikleri
+        </div>
+                <button class="btn btn-secondary btn-sm" id="refresh-metrics-detail-btn">
+                  <i data-feather="refresh-cw"></i>
+                  Yenile
+                </button>
+            </div>
+              <div class="card-body">
+                <pre id="metrics-detail-output">Yükleniyor...</pre>
+            </div>
+          </div>
+          </div>
+
+          <!-- Logs Tab -->
+          <div class="tab-content" id="tab-mon-logs">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-feather="file-text"></i>
+                  Sistem Logları
+            </div>
+                <div class="flex gap-2">
+                  <select class="form-control" id="log-lines" style="width: auto;">
+                    <option value="50">50 satır</option>
+                    <option value="100" selected>100 satır</option>
+                    <option value="200">200 satır</option>
+                    <option value="500">500 satır</option>
+                  </select>
+                  <button class="btn btn-secondary btn-sm" id="refresh-logs-btn">
+                    <i data-feather="refresh-cw"></i>
+                    Yenile
+                  </button>
+          </div>
+            </div>
+              <div class="card-body">
+                <pre id="logs-output">Yükleniyor...</pre>
+            </div>
+            </div>
+          </div>
+
+          <!-- Circuit Breaker Tab -->
+          <div class="tab-content" id="tab-mon-circuit">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-feather="zap"></i>
+                  Circuit Breaker Durumu
+        </div>
+                <button class="btn btn-secondary btn-sm" id="refresh-circuit-btn">
+                  <i data-feather="refresh-cw"></i>
+                  Yenile
+                </button>
+          </div>
+              <div class="card-body">
+                <pre id="circuit-output">Yükleniyor...</pre>
+            </div>
+            </div>
+            </div>
+          </div>
+
+
+        <!-- Settings Page -->
+        <div class="page hidden" id="page-settings">
+          <h1 class="page-title">Yapılandırma</h1>
+          <p class="page-subtitle">Genel sistem ayarları - API key ile erişilebilir</p>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i data-feather="settings"></i>
+                Mevcut Yapılandırma
+              </div>
+              <button class="btn btn-secondary btn-sm" id="refresh-config-btn">
+                <i data-feather="refresh-cw"></i>
+                Yenile
+              </button>
+            </div>
+            <div class="card-body">
+              <pre id="config-output">Yükleniyor...</pre>
+            </div>
+          </div>
+
+          <div class="card mt-4">
+            <div class="card-header">
+              <div class="card-title">
+                <i data-feather="cpu"></i>
+                STT Cihaz Ayarları
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="grid grid-2">
+                <button class="btn btn-primary" id="set-device-cpu-btn">
+                  <i data-feather="cpu"></i>
+                  CPU Kullan
+                </button>
+                <button class="btn btn-primary" id="set-device-gpu-btn">
+                  <i data-feather="zap"></i>
+                  GPU/CUDA Kullan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security Page -->
+        <div class="page hidden" id="page-security">
+          <h1 class="page-title">Güvenlik</h1>
+          <p class="page-subtitle">API güvenlik ayarları - API key ile erişilebilir</p>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i data-feather="shield"></i>
+                Güvenlik Durumu
+              </div>
+              <button class="btn btn-secondary btn-sm" id="refresh-security-btn">
+                <i data-feather="refresh-cw"></i>
+                Yenile
+              </button>
+            </div>
+            <div class="card-body">
+              <pre id="security-output">Yükleniyor...</pre>
+            </div>
+          </div>
+
+          <div class="grid grid-2 mt-4">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-feather="key"></i>
+                  API Key Yönetimi
+                </div>
+              </div>
+              <div class="card-body">
+                <button class="btn btn-primary" id="rotate-api-key-btn">
+                  <i data-feather="refresh-cw"></i>
+                  Yeni API Key Oluştur
+                </button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">
+                  <i data-feather="sliders"></i>
+                  Hız Limitleri
+                </div>
+              </div>
+              <div class="card-body">
+                <pre id="limits-output">Yükleniyor...</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resilience Page -->
+        <div class="page hidden" id="page-resilience">
+          <h1 class="page-title">Dayanıklılık</h1>
+          <p class="page-subtitle">Circuit breaker ve resilience ayarları - API key ile erişilebilir</p>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i data-feather="zap"></i>
+                Resilience Ayarları
+              </div>
+              <button class="btn btn-secondary btn-sm" id="refresh-resilience-btn">
+                <i data-feather="refresh-cw"></i>
+                Yenile
+              </button>
+            </div>
+            <div class="card-body">
+              <pre id="resilience-output">Yükleniyor...</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Status Bar -->
+      <div class="footer-bar">
+        <div style="display: flex; gap: 16px; align-items: center;">
+          <div class="footer-item">
+            <div class="footer-dot"></div>
+            <span>Sistem Aktif</span>
+          </div>
+          <div class="footer-item">
+            <i data-feather="cpu"></i>
+            <span>Cihaz: <strong id="footer-device">-</strong></span>
+          </div>
+          <div class="footer-item">
+            <i data-feather="server"></i>
+            <span>API: <strong id="footer-api-status">Bağlı</strong></span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 16px; align-items: center;">
+          <div class="footer-item">
+            <i data-feather="mic"></i>
+            <span>Sesler: <strong id="footer-voices-count">0</strong></span>
+          </div>
+          <div class="footer-item">
+            <i data-feather="package"></i>
+            <span>v2.0</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Feather Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+
+  <script>
+    // Initialize Feather Icons
+    feather.replace();
+
+    // State Management
+    const state = {
+      apiKey: sessionStorage.getItem('apiKey') || '',
+      elevenlabsKey: sessionStorage.getItem('elevenlabsKey') || 'sk_64a1a5c52372e5b985871e259b512dd5206281e9433e3235',
+      currentPage: 'dashboard',
+      isAuthenticated: false
+    };
+
+    // Check authentication status
+    console.log('API Key from sessionStorage:', state.apiKey);
+    console.log('ElevenLabs Key from sessionStorage:', state.elevenlabsKey);
+    
+    // Check API status on page load
+    checkElevenLabsKeyStatus();
+    
+    // Check if we have a valid ElevenLabs API key for login
+    if (state.elevenlabsKey && state.elevenlabsKey.trim() !== '' && state.elevenlabsKey.startsWith('sk_')) {
+      state.isAuthenticated = true;
+      showMainInterface();
+    } else {
+      console.log('No valid ElevenLabs API key found, showing login page');
+      showLoginPage();
+    }
+
+    function showLoginPage() {
+      document.getElementById('page-login').classList.remove('hidden');
+      document.getElementById('page-dashboard').classList.add('hidden');
+      document.querySelector('.sidebar').style.display = 'none';
+      document.querySelector('.topbar').style.display = 'none';
+    }
+
+    function showMainInterface() {
+      document.getElementById('page-login').classList.add('hidden');
+      document.getElementById('page-dashboard').classList.remove('hidden');
+      document.querySelector('.sidebar').style.display = 'flex';
+      document.querySelector('.topbar').style.display = 'flex';
+      
+      // Initialize ElevenLabs key from session storage
+      document.getElementById('elevenlabs-key-input').value = state.elevenlabsKey;
+      
+      // Check ElevenLabs API key status on page load
+      checkElevenLabsKeyStatus();
+    }
+
+    // ElevenLabs API Key Status Check
+    async function checkElevenLabsKeyStatus() {
+      try {
+        const response = await apiRequest('/ui/api/config/elevenlabs-key');
+        const apiStatusElement = document.getElementById('footer-api-status');
+        
+        if (response.configured && response.has_valid_format) {
+          apiStatusElement.textContent = 'Bağlı';
+          apiStatusElement.style.color = '#10b981'; // green
+          showAlert('ElevenLabs API key yapılandırılmış ve geçerli!', 'success');
+        } else if (response.configured) {
+          apiStatusElement.textContent = 'Geçersiz';
+          apiStatusElement.style.color = '#f59e0b'; // yellow
+          showAlert('ElevenLabs API key yapılandırılmış ancak geçersiz format!', 'warning');
+        } else {
+          apiStatusElement.textContent = 'Bağlı Değil';
+          apiStatusElement.style.color = '#ef4444'; // red
+          showAlert('ElevenLabs API key yapılandırılmamış. Lütfen API key\'inizi girin.', 'info');
+        }
+      } catch (error) {
+        const apiStatusElement = document.getElementById('footer-api-status');
+        apiStatusElement.textContent = 'Hata';
+        apiStatusElement.style.color = '#f59e0b'; // yellow
+        console.log('ElevenLabs API key durumu kontrol edilemedi:', error.message);
+      }
+    }
+
+    // Utility Functions
+    function buildHeaders(extra = {}) {
+      const headers = new Headers();
+      Object.entries(extra).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) headers.set(key, value);
+      });
+      if (state.apiKey) headers.set('X-API-Key', state.apiKey);
+      if (state.elevenlabsKey) headers.set('X-ElevenLabs-Key', state.elevenlabsKey);
+      return headers;
+    }
+
+    async function apiRequest(path, options = {}) {
+      const url = new URL(path, window.location.origin);
+      if (options.query) {
+        Object.entries(options.query).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            url.searchParams.set(key, value);
+          }
+        });
+      }
+      const method = options.method || 'GET';
+      let body = options.body;
+      const isForm = body instanceof FormData;
+      const headers = options.headers ? { ...options.headers } : {};
+      if (!isForm && body && typeof body === 'object') {
+        body = JSON.stringify(body);
+        headers['Content-Type'] = 'application/json';
+      }
+      const response = await fetch(url.toString(), {
+        method,
+        body,
+        headers: buildHeaders(headers),
+      });
+      if (!response.ok) {
+        const error = await response.text();
+        let errorMessage = `HTTP ${response.status}: ${error}`;
+        
+        // Admin key ile ilgili hataları API key ile ilgili hatalara çevir
+        if (response.status === 403 && error.includes('ADMIN_DISABLED')) {
+          errorMessage = 'Bu işlem için API key gerekli. Lütfen API key\'inizi girin.';
+        } else if (response.status === 401 && error.includes('UNAUTHORIZED')) {
+          errorMessage = 'Geçersiz API key. Lütfen doğru API key\'i girin.';
+        }
+        
+        throw new Error(errorMessage);
+      }
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+      }
+      return response;
+    }
+
+    function showJSON(element, data) {
+      if (typeof element === 'string') {
+        element = document.getElementById(element);
+      }
+      if (!element) return;
+      
+      // Handle NaN/Infinity values in display
+      const safeData = typeof data === 'object' ? JSON.parse(JSON.stringify(data, (key, value) => {
+        if (value === null || value === undefined) return value;
+        if (typeof value === 'number' && !isFinite(value)) return null;
+        return value;
+      })) : data;
+      
+      element.textContent = typeof safeData === 'string' ? safeData : JSON.stringify(safeData, null, 2);
+    }
+
+    function showHealthData(element, data) {
+      if (typeof element === 'string') {
+        element = document.getElementById(element);
+      }
+      if (!element) return;
+      
+      const statusClass = data.status === 'ok' ? 'status-ok' : 'status-error';
+      const cudaStatus = data.ctranslate2_cuda ? 'Aktif' : 'Pasif';
+      const torchCudaStatus = data.torch_cuda ? 'Aktif' : 'Pasif';
+      
+      element.innerHTML = `
+        <div class="health-info">
+          <div class="info-section">
+            <h4><i data-feather="activity"></i> Sistem Durumu</h4>
+            <div class="info-item">
+              <span class="info-label">Durum:</span>
+              <span class="info-value ${statusClass}">${data.status || 'Bilinmiyor'}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Cihaz:</span>
+              <span class="info-value">${data.device || 'Bilinmiyor'}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Yapılandırılan Cihaz:</span>
+              <span class="info-value">${data.configured_device || 'Bilinmiyor'}</span>
+            </div>
+          </div>
+          
+          <div class="info-section">
+            <h4><i data-feather="cpu"></i> CUDA Bilgileri</h4>
+            <div class="info-item">
+              <span class="info-label">CUDA Cihaz Sayısı:</span>
+              <span class="info-value">${data.cuda_device_count || 0}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">CTranslate2 CUDA:</span>
+              <span class="info-value ${data.ctranslate2_cuda ? 'status-ok' : 'status-warning'}">${cudaStatus}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Torch CUDA:</span>
+              <span class="info-value ${data.torch_cuda ? 'status-ok' : 'status-warning'}">${torchCudaStatus}</span>
+            </div>
+          </div>
+          
+          <div class="info-section">
+            <h4><i data-feather="code"></i> Yazılım Bilgileri</h4>
+            <div class="info-item">
+              <span class="info-label">Python Sürümü:</span>
+              <span class="info-value">${data.python_version || 'Bilinmiyor'}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Uygulama Sürümü:</span>
+              <span class="info-value">${data.app_version || 'Bilinmiyor'}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">FFmpeg:</span>
+              <span class="info-value small-text">${data.ffmpeg ? data.ffmpeg.split(' ')[0] + ' ' + data.ffmpeg.split(' ')[1] : 'Bilinmiyor'}</span>
+            </div>
+          </div>
+          
+          <div class="info-section">
+            <h4><i data-feather="zap"></i> Özellikler</h4>
+            <div class="features-grid">
+              ${Object.entries(data.features || {}).map(([key, value]) => `
+                <div class="feature-item">
+                  <span class="feature-name">${key.replace(/_/g, ' ').toUpperCase()}</span>
+                  <span class="feature-status ${value ? 'status-ok' : 'status-error'}">${value ? 'Aktif' : 'Pasif'}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          
+          <div class="info-section">
+            <h4><i data-feather="bar-chart-2"></i> Metrik Özeti</h4>
+            <div class="info-item">
+              <span class="info-label">Toplam Metrik Sayısı:</span>
+              <span class="info-value">${data.metrics?.count || 0}</span>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Refresh feather icons
+      if (window.feather) {
+        feather.replace();
+      }
+    }
+
+    function showMetricsData(element, data) {
+      if (typeof element === 'string') {
+        element = document.getElementById(element);
+      }
+      if (!element) return;
+      
+      if (!data || !data.groups || data.groups.length === 0) {
+        element.innerHTML = '<div class="no-data">Henüz metrik verisi bulunmuyor</div>';
+        return;
+      }
+      
+      let html = '<div class="metrics-info">';
+      
+      // Genel bilgiler
+      html += `
+        <div class="info-section">
+          <h4><i data-feather="trending-up"></i> Genel Bilgiler</h4>
+          <div class="info-item">
+            <span class="info-label">Toplam İstek:</span>
+            <span class="info-value">${data.count || 0}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Grup Sayısı:</span>
+            <span class="info-value">${data.groups.length}</span>
+          </div>
+        </div>
+      `;
+      
+      // Her grup için detaylı bilgiler
+      data.groups.forEach((group, index) => {
+        const route = group.key?.route || 'Bilinmeyen';
+        const n = group.n || 0;
+        const latency = group.latency || {};
+        const totalMs = latency['Total ms'] || {};
+        const sttMs = group.stt_ms || {};
+        
+        html += `
+          <div class="info-section">
+            <h4><i data-feather="activity"></i> ${route.toUpperCase()} Rota</h4>
+            <div class="info-item">
+              <span class="info-label">İstek Sayısı:</span>
+              <span class="info-value">${n}</span>
+            </div>
+            
+            <div class="metrics-subsection">
+              <h5><i data-feather="clock"></i> Toplam Gecikme (ms)</h5>
+              <div class="metrics-grid">
+                <div class="metric-item">
+                  <span class="metric-label">Ortalama:</span>
+                  <span class="metric-value">${totalMs.mean ? totalMs.mean.toFixed(2) : 'N/A'}</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">P50:</span>
+                  <span class="metric-value">${totalMs.p50 ? totalMs.p50.toFixed(2) : 'N/A'}</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">P90:</span>
+                  <span class="metric-value">${totalMs.p90 ? totalMs.p90.toFixed(2) : 'N/A'}</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">P95:</span>
+                  <span class="metric-value">${totalMs.p95 ? totalMs.p95.toFixed(2) : 'N/A'}</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">P99:</span>
+                  <span class="metric-value">${totalMs.p99 ? totalMs.p99.toFixed(2) : 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+            
+            ${sttMs.p50 ? `
+            <div class="metrics-subsection">
+              <h5><i data-feather="mic"></i> STT Gecikme (ms)</h5>
+              <div class="metrics-grid">
+                <div class="metric-item">
+                  <span class="metric-label">P50:</span>
+                  <span class="metric-value">${sttMs.p50.toFixed(2)}</span>
+                </div>
+                <div class="metric-item">
+                  <span class="metric-label">P90:</span>
+                  <span class="metric-value">${sttMs.p90 ? sttMs.p90.toFixed(2) : 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+            ` : ''}
+            
+            ${latency['Budget Over Pct'] ? `
+            <div class="info-item">
+              <span class="info-label">Bütçe Aşım Oranı:</span>
+              <span class="info-value ${latency['Budget Over Pct'] > 50 ? 'status-warning' : 'status-ok'}">%${latency['Budget Over Pct']}</span>
+            </div>
+            ` : ''}
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+      element.innerHTML = html;
+      
+      // Refresh feather icons
+      if (window.feather) {
+        feather.replace();
+      }
+    }
+
+    // Alert yönetimi için global değişkenler
+    let alertQueue = [];
+    let isShowingAlert = false;
+    let alertCounter = 0;
+
+    function showAlert(message, type = 'info', persistent = false) {
+      const alertId = ++alertCounter;
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type}`;
+      alert.id = `alert-${alertId}`;
+      alert.innerHTML = `
+        <i data-feather="${type === 'success' ? 'check-circle' : type === 'danger' ? 'x-circle' : 'info'}"></i>
+        <div>${message}</div>
+        ${persistent ? '<button class="alert-close" onclick="removeAlertById(' + alertId + ')"><i data-feather="x"></i></button>' : ''}
+      `;
+      
+      // Sürekli bildirimler için alt kısım, geçici bildirimler için üst kısım
+      if (persistent) {
+        // Alt kısım için container oluştur
+        let bottomContainer = document.getElementById('bottom-alerts-container');
+        if (!bottomContainer) {
+          bottomContainer = document.createElement('div');
+          bottomContainer.id = 'bottom-alerts-container';
+          bottomContainer.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            max-width: 90%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+          `;
+          document.body.appendChild(bottomContainer);
+        }
+        
+        // Mevcut sürekli bildirimleri temizle
+        bottomContainer.innerHTML = '';
+        bottomContainer.appendChild(alert);
+      } else {
+        // Geçici bildirimler için kuyruk sistemi
+        if (isShowingAlert) {
+          // Eğer zaten bir bildirim gösteriliyorsa, kuyruğa ekle
+          alertQueue.push({ alert, alertId, message, type });
+          return;
+        }
+        
+        showTemporaryAlert(alert, alertId);
+      }
+      
+      feather.replace();
+    }
+
+    function showTemporaryAlert(alert, alertId) {
+      isShowingAlert = true;
+      
+      // Önceki geçici bildirimleri temizle
+      const existingAlerts = document.querySelectorAll('.alert:not(#bottom-alerts-container .alert)');
+      existingAlerts.forEach(existingAlert => {
+        if (existingAlert.id !== `alert-${alertId}`) {
+          existingAlert.remove();
+        }
+      });
+      
+      // Yeni bildirimi göster
+      document.body.appendChild(alert);
+      
+      // 5 saniye sonra kaldır
+      setTimeout(() => {
+        removeAlertById(alertId);
+        
+        // Kuyruktaki bir sonraki bildirimi göster
+        if (alertQueue.length > 0) {
+          const nextAlert = alertQueue.shift();
+          setTimeout(() => {
+            showTemporaryAlert(nextAlert.alert, nextAlert.alertId);
+          }, 300);
+        } else {
+          isShowingAlert = false;
+        }
+      }, 5000);
+    }
+
+    function removeAlertById(alertId) {
+      const alert = document.getElementById(`alert-${alertId}`);
+      if (alert) {
+        if (alert.parentElement && alert.parentElement.id === 'bottom-alerts-container') {
+          // Sürekli bildirim - direkt kaldır
+          alert.remove();
+        } else {
+          // Geçici bildirim - animasyonla kaldır
+          alert.style.opacity = '0';
+          alert.style.transform = 'translateX(-50%) translateY(-20px)';
+          setTimeout(() => {
+            if (alert.parentElement) {
+              alert.remove();
+            }
+          }, 300);
+        }
+      }
+    }
+
+    // Global fonksiyon olarak tanımla
+    window.removeAlertById = removeAlertById;
+
+    // Klonlama başarı ekranı
+    function displayCloneSuccess(result) {
+      const outputDiv = document.getElementById('clone-output');
+      const voiceId = result.voice_id || 'N/A';
+      const alias = result.alias || 'N/A';
+      
+      outputDiv.innerHTML = `
+        <div class="clone-success-card">
+          <div class="success-header">
+            <div class="success-icon">
+              <i data-feather="check-circle"></i>
+            </div>
+            <h3>Ses Başarıyla Klonlandı!</h3>
+            <p class="success-subtitle">Yeni sesiniz hazır ve kullanıma hazır</p>
+          </div>
+          
+          <div class="success-details">
+            <div class="detail-item">
+              <div class="detail-label">
+                <i data-feather="user"></i>
+                Ses Adı
+              </div>
+              <div class="detail-value">${alias}</div>
+            </div>
+            
+            <div class="detail-item">
+              <div class="detail-label">
+                <i data-feather="hash"></i>
+                Ses ID
+              </div>
+              <div class="detail-value voice-id">${voiceId}</div>
+            </div>
+            
+            <div class="detail-item">
+              <div class="detail-label">
+                <i data-feather="clock"></i>
+                Oluşturulma
+              </div>
+              <div class="detail-value">${new Date().toLocaleString('tr-TR')}</div>
+            </div>
+          </div>
+          
+          <div class="success-actions">
+            <button class="btn btn-primary" onclick="copyToClipboard('${voiceId}')">
+              <i data-feather="copy"></i>
+              ID'yi Kopyala
+            </button>
+            <button class="btn btn-success" onclick="testClonedVoice('${voiceId}', '${alias}')">
+              <i data-feather="play"></i>
+              Test Et
+            </button>
+            <button class="btn btn-outline-primary" onclick="loadVoices()">
+              <i data-feather="refresh-cw"></i>
+              Sesleri Yenile
+            </button>
+          </div>
+          
+          <div class="success-tips">
+            <h4>💡 İpuçları:</h4>
+            <ul>
+              <li>Sesinizi TTS Playground'da test edebilirsiniz</li>
+              <li>Daha iyi sonuçlar için çeşitli tonlamalarda konuşun</li>
+              <li>Ses kalitesini artırmak için daha fazla örnek ekleyebilirsiniz</li>
+            </ul>
+          </div>
+        </div>
+      `;
+      
+      feather.replace();
+      showAlert('🎉 Ses klonlama başarılı! Yeni sesiniz kullanıma hazır.', 'success');
+    }
+
+    // ID'yi panoya kopyala
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showAlert('Ses ID\'si panoya kopyalandı!', 'success');
+      }).catch(() => {
+        showAlert('Kopyalama başarısız!', 'warning');
+      });
+    }
+
+    // Klonlanan sesi test et
+    function testClonedVoice(voiceId, alias) {
+      // TTS Playground'a yönlendir
+      document.querySelector('[data-page="playground"]').click();
+      
+      // Ses seçimini güncelle
+      setTimeout(() => {
+        const voiceSelect = document.getElementById('tts-voice-select');
+        if (voiceSelect) {
+          voiceSelect.value = alias;
+          showAlert(`Test için "${alias}" sesi seçildi. Metin girin ve test edin!`, 'info');
+        }
+      }, 500);
+    }
+
+    function createAudioPlayer(audioData, mimeType = 'audio/mpeg') {
+      const blob = new Blob([Uint8Array.from(atob(audioData), c => c.charCodeAt(0))], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const player = document.createElement('div');
+      player.className = 'audio-player';
+      player.innerHTML = `
+        <audio controls src="${url}"></audio>
+        <button class="btn btn-secondary btn-sm" onclick="window.open('${url}')">
+          <i data-feather="download"></i>
+        </button>
+      `;
+      feather.replace();
+      return player;
+    }
+
+    // Navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const page = item.dataset.page;
+        if (!page) return;
+
+        // Update nav state
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+
+        // Show page
+        document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+        document.getElementById(`page-${page}`).classList.remove('hidden');
+
+        state.currentPage = page;
+
+        // Load page data
+        loadPageData(page);
+      });
+    });
+
+    // Tab Navigation
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabId = tab.dataset.tab;
+        const tabContainer = tab.closest('.page') || tab.closest('.card');
+        
+        // Update tab state
+        tabContainer.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Show tab content
+        tabContainer.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+        const targetContent = document.getElementById(`tab-${tabId}`);
+        if (targetContent) {
+          targetContent.classList.add('active');
+        }
+      });
+    });
+
+    // Login functionality
+    document.getElementById('login-btn').addEventListener('click', async () => {
+      const elevenlabsKey = document.getElementById('login-api-key').value.trim();
+      const loginBtn = document.getElementById('login-btn');
+      
+      if (!elevenlabsKey) {
+        showAlert('Lütfen ElevenLabs API key girin!', 'warning');
+        return;
+      }
+      
+      // Check if it's ElevenLabs key format
+      if (!elevenlabsKey.startsWith('sk_')) {
+        showAlert('ElevenLabs API key "sk_" ile başlamalı!', 'warning');
+        return;
+      }
+      
+      // Disable button and show loading
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<i data-feather="loader" class="animate-spin"></i> Doğrulanıyor...';
+      feather.replace();
+      
+      try {
+        // First, test the ElevenLabs API key by making a real API call
+        showAlert('ElevenLabs API key doğrulanıyor... Bu işlem biraz zaman alabilir.', 'info');
+        
+        const testResponse = await fetch('https://api.elevenlabs.io/v1/voices', {
+          method: 'GET',
+          headers: {
+            'xi-api-key': elevenlabsKey,
+            'Content-Type': 'application/json'
+          },
+          signal: AbortSignal.timeout(15000) // 15 saniye timeout
+        });
+        
+        if (!testResponse.ok) {
+          // Reset button
+          loginBtn.disabled = false;
+          loginBtn.innerHTML = '<i data-feather="log-in"></i> Giriş Yap';
+          feather.replace();
+          
+          if (testResponse.status === 401) {
+            showAlert('ElevenLabs API key geçersiz! Lütfen doğru key\'i girin.', 'danger');
+          } else if (testResponse.status === 429) {
+            showAlert('ElevenLabs API limiti aşıldı! Lütfen daha sonra tekrar deneyin.', 'warning');
+          } else {
+            showAlert('ElevenLabs API hatası: ' + testResponse.status, 'danger');
+          }
+          return;
+        }
+        
+        // If API test successful, try to save the key to backend
+        try {
+          const saveResponse = await fetch('/ui/api/config/elevenlabs-key', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ api_key: elevenlabsKey })
+          });
+          
+          if (saveResponse.ok) {
+            const result = await saveResponse.json();
+            showAlert('ElevenLabs API key doğrulandı ve kaydedildi!', 'success');
+          } else {
+            showAlert('ElevenLabs API key doğrulandı ancak kaydedilemedi. Yine de devam edebilirsiniz.', 'warning');
+          }
+        } catch (saveError) {
+          showAlert('ElevenLabs API key doğrulandı ancak kaydedilemedi. Yine de devam edebilirsiniz.', 'warning');
+        }
+        
+        // Always proceed to main interface if API test was successful
+        state.elevenlabsKey = elevenlabsKey;
+        state.isAuthenticated = true;
+        sessionStorage.setItem('elevenlabsKey', elevenlabsKey);
+        
+        // Show success message
+        showAlert('ElevenLabs API key doğrulandı! Dashboard\'a geçiliyor...', 'success');
+        
+        // Show main interface
+        setTimeout(() => {
+          showMainInterface();
+          checkElevenLabsKeyStatus();
+        }, 1000);
+      } catch (error) {
+        // Reset button
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<i data-feather="log-in"></i> Giriş Yap';
+        feather.replace();
+        
+        if (error.name === 'AbortError') {
+          showAlert('ElevenLabs API\'sine bağlantı zaman aşımına uğradı! Lütfen tekrar deneyin.', 'warning');
+        } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+          showAlert('ElevenLabs API\'sine bağlanılamadı! İnternet bağlantınızı kontrol edin.', 'danger');
+        } else {
+          showAlert('Hata: ' + error.message, 'danger');
+        }
+      }
+    });
+
+    // Enter key support for login
+    document.getElementById('login-api-key').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('login-btn').click();
+      }
+    });
+
+    // Logout functionality
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      state.elevenlabsKey = '';
+      state.isAuthenticated = false;
+      sessionStorage.removeItem('elevenlabsKey');
+      showLoginPage();
+      showAlert('Çıkış yapıldı!', 'info');
+    });
+
+    // Clear session storage function (for debugging)
+    function clearSessionStorage() {
+      console.log('Clearing session storage...');
+      sessionStorage.clear();
+      state.elevenlabsKey = '';
+      state.isAuthenticated = false;
+      showLoginPage();
+      showAlert('Session temizlendi!', 'info');
+    }
+
+    // Add clear button for debugging (remove in production)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      const clearBtn = document.createElement('button');
+      clearBtn.textContent = 'Clear Session';
+      clearBtn.style.position = 'fixed';
+      clearBtn.style.top = '10px';
+      clearBtn.style.right = '10px';
+      clearBtn.style.zIndex = '9999';
+      clearBtn.style.background = 'red';
+      clearBtn.style.color = 'white';
+      clearBtn.style.border = 'none';
+      clearBtn.style.padding = '5px 10px';
+      clearBtn.style.borderRadius = '3px';
+      clearBtn.onclick = clearSessionStorage;
+      document.body.appendChild(clearBtn);
+    }
+
+    // Save ElevenLabs Key
+    document.getElementById('save-keys-btn').addEventListener('click', async () => {
+      const elevenlabsKey = document.getElementById('elevenlabs-key-input').value.trim();
+      
+      if (!elevenlabsKey) {
+        showAlert('Lütfen ElevenLabs API key girin!', 'warning');
+        return;
+      }
+      
+      if (!elevenlabsKey.startsWith('sk_')) {
+        showAlert('ElevenLabs API key "sk_" ile başlamalı!', 'warning');
+        return;
+      }
+      
+      try {
+        const response = await apiRequest('/ui/api/config/elevenlabs-key', {
+          method: 'POST',
+          body: { api_key: elevenlabsKey }
+        });
+        
+        state.elevenlabsKey = elevenlabsKey;
+        sessionStorage.setItem('elevenlabsKey', state.elevenlabsKey);
+        showAlert('ElevenLabs API key başarıyla kaydedildi!', 'success');
+        // Update API status after saving
+        checkElevenLabsKeyStatus();
+      } catch (error) {
+        showAlert(`ElevenLabs API key kaydedilemedi: ${error.message}`, 'danger');
+      }
+    });
+
+    // Page Data Loaders
+    async function loadPageData(page) {
+      switch (page) {
+        case 'dashboard':
+          await loadDashboard();
+          break;
+        case 'voices':
+          await loadVoices();
+          break;
+        case 'subscription':
+          await loadSubscription();
+          break;
+        case 'history':
+          await loadHistory();
+          break;
+        case 'terms':
+          await loadTerms();
+          break;
+        case 'monitoring':
+          await loadMetrics();
+          break;
+        case 'settings':
+          await loadConfig();
+          break;
+        case 'security':
+          await loadSecurity();
+          break;
+        case 'resilience':
+          await loadResilience();
+          break;
+      }
+    }
+
+    // Dashboard Functions
+    async function loadDashboard() {
+      try {
+        const health = await apiRequest('/health');
+        showHealthData('health-output', health);
+        
+        document.getElementById('health-status').textContent = health.status || 'healthy';
+        
+        // Load metrics
+        const metrics = await apiRequest('/diag/metrics/summary');
+        showMetricsData('metrics-output', metrics);
+        
+        // Load voice count (cached to avoid rate limiting)
+        let voiceCount = 0;
+        try {
+          // Cache için localStorage kullan
+          const cachedVoices = localStorage.getItem('cached_voices');
+          const cachedTime = localStorage.getItem('cached_voices_time');
+          const now = Date.now();
+          
+          // Cache 5 dakikadan eskiyse yeniden yükle
+          if (cachedVoices && cachedTime && (now - parseInt(cachedTime)) < 300000) {
+            const voicesData = JSON.parse(cachedVoices);
+            voiceCount = voicesData.length || 0;
+          } else {
+            const voicesData = await apiRequest('/voices');
+            voiceCount = voicesData.length || 0;
+            localStorage.setItem('cached_voices', JSON.stringify(voicesData));
+            localStorage.setItem('cached_voices_time', now.toString());
+          }
+          document.getElementById('total-voices').textContent = voiceCount;
+        } catch (e) {
+          console.error('Failed to load voices:', e);
+          document.getElementById('total-voices').textContent = '?';
+        }
+        
+        // Load terms count
+        try {
+          const terms = await apiRequest('/ui/api/terms/list');
+          document.getElementById('total-terms').textContent = terms.length || 0;
+        } catch (e) {
+          console.error('Failed to load terms:', e);
+        }
+        
+        // STT device
+        const device = health.device || 'N/A';
+        document.getElementById('stt-device').textContent = device;
+        
+        // Update footer
+        document.getElementById('footer-device').textContent = device;
+        document.getElementById('footer-voices-count').textContent = voiceCount;
+        
+      } catch (error) {
+        document.getElementById('health-output').innerHTML = `<div class="error-message">Hata: ${error.message}</div>`;
+      }
+    }
+
+    document.getElementById('refresh-health-btn').addEventListener('click', loadDashboard);
+    document.getElementById('refresh-metrics-btn').addEventListener('click', async () => {
+      try {
+        const metrics = await apiRequest('/diag/metrics/summary');
+        showMetricsData('metrics-output', metrics);
+      } catch (error) {
+        document.getElementById('metrics-output').innerHTML = `<div class="error-message">Hata: ${error.message}</div>`;
+      }
+    });
+
+    // Voice Functions
+    async function loadVoices() {
+      try {
+        const result = await apiRequest('/ui/api/voices');
+        const grid = document.getElementById('voices-grid');
+        grid.innerHTML = '';
+        
+        if (!result.voices || result.voices.length === 0) {
+          grid.innerHTML = '<p class="text-center" style="grid-column: 1/-1;">Ses bulunamadı.</p>';
+          return;
+        }
+        
+        // Tekrarları engellemek için voice_id'ye göre benzersizlik kontrolü
+        const uniqueVoices = [];
+        const seenIds = new Set();
+        
+        result.voices.forEach(voice => {
+          if (voice.voice_id && !seenIds.has(voice.voice_id)) {
+            seenIds.add(voice.voice_id);
+            uniqueVoices.push(voice);
+          }
+        });
+        
+        console.log(`Toplam ses: ${result.voices.length}, Benzersiz ses: ${uniqueVoices.length}`);
+        
+        if (uniqueVoices.length === 0) {
+          grid.innerHTML = '<p class="text-center" style="grid-column: 1/-1;">Ses bulunamadı.</p>';
+          return;
+        }
+        
+        uniqueVoices.forEach(voice => {
+          const card = document.createElement('div');
+          card.className = 'voice-card';
+          card.innerHTML = `
+            <div class="voice-card-header">
+              <div>
+                <div class="voice-card-title">${voice.name || 'İsimsiz'}</div>
+                <div class="voice-card-meta">ID: ${voice.voice_id || 'N/A'}</div>
+                ${voice.category ? `<span class="badge badge-primary">${voice.category}</span>` : ''}
+              </div>
+              <div class="voice-card-actions">
+                ${voice.category === 'cloned' ? `
+                  <button class="btn btn-danger btn-sm" onclick="deleteVoice('${voice.voice_id}', '${voice.name}')">
+                    <i data-feather="trash-2"></i>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+        
+        // Update footer voice count
+        document.getElementById('footer-voices-count').textContent = uniqueVoices.length || 0;
+        
+        feather.replace();
+      } catch (error) {
+        showAlert(`Sesler yüklenemedi: ${error.message}`, 'danger');
+      }
+      
+      // Load aliases
+      await loadAliases();
+    }
+
+    async function loadAliases() {
+      try {
+        const result = await apiRequest('/ui/api/voices');
+        const tbody = document.getElementById('aliases-tbody');
+        tbody.innerHTML = '';
+        
+        if (!result.aliases || result.aliases.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center">Alias bulunamadı.</td></tr>';
+        return;
+      }
+
+        result.aliases.forEach(alias => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${alias.alias || 'N/A'}</td>
+            <td><code>${alias.voice_id || 'N/A'}</code></td>
+            <td>${alias.name || 'N/A'}</td>
+            <td><span class="badge badge-info">${alias.source || 'N/A'}</span></td>
+            <td>
+              <button class="btn btn-danger btn-sm" onclick="deleteAlias('${alias.alias}')">
+                <i data-feather="trash-2"></i> Sil
+              </button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+        
+        feather.replace();
+      } catch (error) {
+        console.error('Failed to load aliases:', error);
+      }
+    }
+
+    window.deleteVoice = async function(voiceId, name) {
+      if (!confirm(`"${name}" sesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) return;
+      try {
+        showAlert('Ses siliniyor...', 'info');
+        await apiRequest(`/ui/api/voices/${voiceId}`, { method: 'DELETE' });
+        showAlert('Ses başarıyla silindi!', 'success');
+        // Cache'i temizle
+        localStorage.removeItem('cached_voices');
+        localStorage.removeItem('cached_voices_time');
+        await loadVoices();
+      } catch (error) {
+        showAlert(`Hata: ${error.message}`, 'danger');
+      }
+    };
+
+    window.deleteAlias = async function(alias) {
+      if (!confirm(`"${alias}" alias'ını silmek istediğinizden emin misiniz?`)) return;
+      try {
+        showAlert('Alias siliniyor...', 'info');
+        await apiRequest(`/ui/api/aliases/${encodeURIComponent(alias)}`, { method: 'DELETE' });
+        showAlert('Alias başarıyla silindi!', 'success');
+        await loadAliases();
+      } catch (error) {
+        showAlert(`Hata: ${error.message}`, 'danger');
+      }
+    };
+
+    document.getElementById('refresh-voices-btn').addEventListener('click', loadVoices);
+    document.getElementById('refresh-aliases-btn').addEventListener('click', loadAliases);
+
+    // Voice Recording
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let recordedFiles = [];
+    let recordingStartTime = null;
+    let recordingTimer = null;
+
+    // Mikrofon erişimi kontrolü
+    async function checkMicrophonePermission() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+        return true;
+      } catch (error) {
+        console.error('Mikrofon erişimi reddedildi:', error);
+        return false;
+      }
+    }
+
+    // Kayıt başlat
+    async function startRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 44100
+          } 
+        });
+        
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'audio/webm;codecs=opus'
+        });
+        
+        recordedChunks = [];
+        recordingStartTime = Date.now();
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+          }
+        };
+        
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+          const audioUrl = URL.createObjectURL(blob);
+          const duration = Math.round((Date.now() - recordingStartTime) / 1000);
+          
+          // Kayıt dosyasını listeye ekle
+          const recordedFile = {
+            blob: blob,
+            url: audioUrl,
+            name: `Kayıt_${new Date().toLocaleTimeString()}.webm`,
+            duration: duration
+          };
+          
+          recordedFiles.push(recordedFile);
+          updateRecordedFilesList();
+          
+          // Butonları güncelle
+          document.getElementById('play-recorded-btn').disabled = false;
+          document.getElementById('add-recorded-btn').disabled = false;
+          
+          // Otomatik olarak form'a ekle
+          addRecordedFilesToForm();
+          
+          // Stream'i temizle
+          stream.getTracks().forEach(track => track.stop());
+        };
+        
+        mediaRecorder.start();
+        
+        // UI güncellemeleri
+        document.getElementById('record-btn').disabled = true;
+        document.getElementById('stop-record-btn').disabled = false;
+        document.getElementById('recording-indicator').style.display = 'flex';
+        document.getElementById('recording-timer').style.display = 'block';
+        
+        // Timer başlat
+        startRecordingTimer();
+        
+        showAlert('Kayıt başladı!', 'info');
+        
+      } catch (error) {
+        console.error('Kayıt başlatılamadı:', error);
+        showAlert('Mikrofon erişimi gerekli! Tarayıcı izinlerini kontrol edin.', 'warning');
+      }
+    }
+
+    // Kayıt durdur
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        
+        // UI güncellemeleri
+        document.getElementById('record-btn').disabled = false;
+        document.getElementById('stop-record-btn').disabled = true;
+        document.getElementById('recording-indicator').style.display = 'none';
+        document.getElementById('recording-timer').style.display = 'none';
+        
+        // Timer durdur
+        if (recordingTimer) {
+          clearInterval(recordingTimer);
+          recordingTimer = null;
+        }
+        
+        showAlert('Kayıt tamamlandı!', 'success');
+      }
+    }
+
+    // Kayıt timer'ı
+    function startRecordingTimer() {
+      recordingTimer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        document.getElementById('timer-display').textContent = 
+          `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      }, 1000);
+    }
+
+    // Kaydedilen dosyalar listesini güncelle
+    function updateRecordedFilesList() {
+      const container = document.getElementById('recorded-files-container');
+      const listDiv = document.getElementById('recorded-files-list');
+      
+      if (recordedFiles.length === 0) {
+        listDiv.style.display = 'none';
+        return;
+      }
+      
+      listDiv.style.display = 'block';
+      container.innerHTML = '';
+      
+      recordedFiles.forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'recorded-file-item';
+        fileItem.innerHTML = `
+          <div class="recorded-file-info">
+            <i data-feather="file-audio"></i>
+            <div>
+              <div class="recorded-file-name">${file.name}</div>
+              <div class="recorded-file-duration">${file.duration} saniye</div>
+            </div>
+          </div>
+          <div class="recorded-file-actions">
+            <button class="btn btn-sm btn-outline-primary" onclick="playRecordedFile(${index})">
+              <i data-feather="play"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="removeRecordedFile(${index})">
+              <i data-feather="trash-2"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(fileItem);
+      });
+      
+      feather.replace();
+    }
+
+    // Kaydedilen dosyayı oynat
+    function playRecordedFile(index) {
+      const file = recordedFiles[index];
+      if (file) {
+        const audio = new Audio(file.url);
+        audio.play();
+      }
+    }
+
+    // Kaydedilen dosyayı kaldır
+    function removeRecordedFile(index) {
+      const file = recordedFiles[index];
+      if (file) {
+        URL.revokeObjectURL(file.url);
+        recordedFiles.splice(index, 1);
+        updateRecordedFilesList();
+      }
+    }
+
+    // Kaydedilen dosyaları form'a ekle
+    function addRecordedFilesToForm() {
+      const filesInput = document.getElementById('clone-files');
+      
+      // DataTransfer API'si destekleniyorsa kullan
+      if (typeof DataTransfer !== 'undefined' && filesInput.files instanceof FileList) {
+        const dataTransfer = new DataTransfer();
+        
+        // Mevcut dosyaları ekle
+        Array.from(filesInput.files).forEach(file => {
+          dataTransfer.items.add(file);
+        });
+        
+        // Kaydedilen dosyaları ekle
+        recordedFiles.forEach(file => {
+          dataTransfer.items.add(file.blob, file.name);
+        });
+        
+        filesInput.files = dataTransfer.files;
+      } else {
+        // Fallback: Hidden input kullan
+        let hiddenInput = document.getElementById('recorded-files-hidden');
+        if (!hiddenInput) {
+          hiddenInput = document.createElement('input');
+          hiddenInput.type = 'hidden';
+          hiddenInput.id = 'recorded-files-hidden';
+          hiddenInput.name = 'recorded_files';
+          document.getElementById('clone-files').parentNode.appendChild(hiddenInput);
+        }
+        
+        // Kaydedilen dosyaları base64 olarak sakla
+        const recordedData = recordedFiles.map(file => ({
+          name: file.name,
+          data: file.url, // Blob URL'i
+          duration: file.duration
+        }));
+        hiddenInput.value = JSON.stringify(recordedData);
+      }
+      
+      // Dosya sayısını kontrol et
+      const totalFiles = filesInput.files ? filesInput.files.length : 0;
+      const recordedCount = recordedFiles.length;
+      
+      if (totalFiles + recordedCount > 3) {
+        showAlert('Maksimum 3 dosya seçebilirsiniz!', 'warning');
+        return;
+      }
+      
+      // Dosya input'unu güncelle
+      updateFileInputDisplay();
+      
+      if (recordedFiles.length > 0) {
+        showAlert(`${recordedFiles.length} kayıt dosyası otomatik olarak eklendi!`, 'success');
+      }
+    }
+
+    // Dosya input görünümünü güncelle
+    function updateFileInputDisplay() {
+      const filesInput = document.getElementById('clone-files');
+      const fileCount = filesInput.files.length;
+      
+      if (fileCount > 0) {
+        const fileNames = Array.from(filesInput.files).map(file => file.name).join(', ');
+        filesInput.nextElementSibling.textContent = `${fileCount} dosya seçildi: ${fileNames}`;
+        filesInput.nextElementSibling.style.color = 'var(--success)';
+      } else {
+        filesInput.nextElementSibling.textContent = 'Dosya seçilmedi';
+        filesInput.nextElementSibling.style.color = 'var(--text-muted)';
+      }
+    }
+
+    // Event listener'ları ekle
+    document.addEventListener('DOMContentLoaded', async () => {
+      const hasPermission = await checkMicrophonePermission();
+      document.getElementById('record-btn').disabled = !hasPermission;
+      
+      if (!hasPermission) {
+        showAlert('Mikrofon erişimi gerekli! Lütfen tarayıcı izinlerini kontrol edin.', 'warning', true);
+      }
+      
+      // Ses klonlama talimatları
+      showAlert('Ses Klonlama Talimatları: En az 1 dakikalık temiz, gürültüsüz ses kaydı. Daha iyi sonuçlar için 3-5 dakikalık çeşitli tonlamalarda konuşma önerilir.', 'info', true);
+    });
+
+    document.getElementById('record-btn').addEventListener('click', startRecording);
+    document.getElementById('stop-record-btn').addEventListener('click', stopRecording);
+    document.getElementById('add-recorded-btn').addEventListener('click', addRecordedFilesToForm);
+    
+    // Dosya input değişikliklerini dinle
+    document.getElementById('clone-files').addEventListener('change', updateFileInputDisplay);
+
+    // Voice Clone
+    document.getElementById('clone-submit-btn').addEventListener('click', async () => {
+      const name = document.getElementById('clone-name').value.trim();
+      const alias = document.getElementById('clone-alias').value.trim();
+      const description = document.getElementById('clone-description').value.trim();
+      const filesInput = document.getElementById('clone-files');
+      const files = Array.from(filesInput.files || []);
+      
+      // Etiket bilgilerini al
+      const language = document.getElementById('clone-language').value;
+      const accent = document.getElementById('clone-accent').value;
+      const gender = document.getElementById('clone-gender').value;
+      const age = document.getElementById('clone-age').value;
+      const tone = document.getElementById('clone-tone').value;
+      const useCase = document.getElementById('clone-use-case').value;
+      
+      // Dosya kontrolü - hem normal dosyalar hem de kayıt dosyaları
+      const hasNormalFiles = files.length > 0;
+      const hasRecordedFiles = recordedFiles.length > 0;
+      
+      if (!name || (!hasNormalFiles && !hasRecordedFiles)) {
+        showAlert('İsim ve en az bir ses dosyası gerekli! (Dosya yükleme veya mikrofon kaydı)', 'warning');
+        return;
+      }
+
+      const form = new FormData();
+      form.append('name', name);
+      form.append('alias', alias || 'user');
+      if (description) form.append('description', description);
+      
+      // Normal dosyaları ekle
+      files.slice(0, 3).forEach(file => form.append('files', file, file.name));
+      
+      // Kayıt dosyalarını ekle
+      recordedFiles.forEach(file => {
+        form.append('files', file.blob, file.name);
+      });
+      
+      // Etiketleri labels objesi olarak ekle
+      const labels = {};
+      if (language) labels.language = language;
+      if (accent) labels.accent = accent;
+      if (gender) labels.gender = gender;
+      if (age) labels.age = age;
+      if (tone) labels.tone = tone;
+      if (useCase) labels.use_case = useCase;
+      
+      if (Object.keys(labels).length > 0) {
+        form.append('labels', JSON.stringify(labels));
+      }
+      
+      try {
+        document.getElementById('clone-submit-btn').disabled = true;
+        showAlert('Ses klonlanıyor... Bu işlem 30-60 saniye sürebilir.', 'info', true);
+        
+        const result = await apiRequest('/ui/api/ivc', { method: 'POST', body: form });
+        
+        // Başarılı klonlama için güzel ekran göster
+        if (result && result.status === 'proxied' && result.result) {
+          displayCloneSuccess(result.result);
+        } else {
+          showJSON('clone-output', result);
+          showAlert('Ses başarıyla klonlandı!', 'success');
+        }
+        
+        // Clear form
+        document.getElementById('clone-name').value = '';
+        document.getElementById('clone-alias').value = '';
+        document.getElementById('clone-description').value = '';
+        document.getElementById('clone-files').value = '';
+        
+        // Clear labels
+        document.getElementById('clone-language').value = '';
+        document.getElementById('clone-accent').value = '';
+        document.getElementById('clone-gender').value = '';
+        document.getElementById('clone-age').value = '';
+        document.getElementById('clone-tone').value = '';
+        document.getElementById('clone-use-case').value = '';
+        
+        // Reload voices ve cache'i temizle
+        localStorage.removeItem('cached_voices');
+        localStorage.removeItem('cached_voices_time');
+        await loadVoices();
+        await loadVoiceOptions(); // Dropdown'ları güncelle
+      } catch (error) {
+        showJSON('clone-output', `Hata: ${error.message}`);
+        showAlert(`Ses klonlama başarısız: ${error.message}`, 'danger');
+      } finally {
+        document.getElementById('clone-submit-btn').disabled = false;
+      }
+    });
+
+    // Load voice options for playgrounds
+    async function loadVoiceOptions() {
+      try {
+        // API'den çek (aliases için gerekli)
+        const result = await apiRequest('/ui/api/voices');
+        console.log('✅ Voice options yüklendi:', result.aliases?.length || 0, 'alias');
+        
+        // TTS dropdown
+        const ttsSelect = document.getElementById('tts-voice-select');
+        if (ttsSelect) {
+          ttsSelect.innerHTML = '<option value="">-- Ses Seçin --</option>';
+        }
+        
+        // Speak Chain dropdown
+        const speakSelect = document.getElementById('speak-voice-select');
+        if (speakSelect) {
+          speakSelect.innerHTML = '<option value="">-- Ses Seçin --</option>';
+        }
+        
+        
+        if (result.aliases && result.aliases.length > 0) {
+          result.aliases.forEach(alias => {
+            const option = `<option value="${alias.alias}" data-id="${alias.voice_id}">${alias.alias} (${alias.name})</option>`;
+            if (ttsSelect) ttsSelect.innerHTML += option;
+            if (speakSelect) speakSelect.innerHTML += option;
+          });
+        }
+      } catch (e) {
+        console.error('Failed to load voice options:', e);
+      }
+    }
+
+    // TTS Playground
+    document.getElementById('tts-submit-btn').addEventListener('click', async () => {
+      const text = document.getElementById('tts-text').value.trim();
+      const selectedVoice = document.getElementById('tts-voice-select').value;
+      const manualId = document.getElementById('tts-voice-manual').value.trim();
+      
+      if (!text) {
+        showAlert('Metin gerekli!', 'warning');
+        return;
+      }
+      
+      const body = { text };
+      if (manualId) {
+        body.voice_id = manualId;
+      } else if (selectedVoice) {
+        body.voice_alias = selectedVoice;
+      }
+      
+      // Voice settings ekle
+      const stability = parseFloat(document.getElementById('tts-stability').value);
+      const similarity = parseFloat(document.getElementById('tts-similarity').value);
+      const style = parseFloat(document.getElementById('tts-style').value);
+      const speakerBoost = document.getElementById('tts-speaker-boost').checked;
+      const optimizeLatency = document.getElementById('tts-optimize-latency').value;
+      const voiceConsistency = document.getElementById('tts-voice-consistency').checked;
+      
+      body.stability = stability;
+      body.similarity_boost = similarity;
+      body.style = style;
+      body.use_speaker_boost = speakerBoost;
+      
+      if (optimizeLatency) {
+        body.optimize_streaming_latency = parseInt(optimizeLatency);
+      }
+      if (voiceConsistency) {
+        body.use_voice_consistency = voiceConsistency;
+      }
+      
+      try {
+        document.getElementById('tts-submit-btn').disabled = true;
+        const result = await apiRequest('/ui/api/playground/tts', { method: 'POST', body });
+        
+        const output = document.getElementById('tts-output');
+        output.innerHTML = '';
+        if (result.audio_base64) {
+          output.appendChild(createAudioPlayer(result.audio_base64, result.mime_type));
+        }
+        const pre = document.createElement('pre');
+        pre.textContent = JSON.stringify(result, null, 2);
+        output.appendChild(pre);
+        
+        showAlert('TTS başarılı!', 'success');
+      } catch (error) {
+        showJSON('tts-output', `Hata: ${error.message}`);
+        showAlert(`TTS başarısız: ${error.message}`, 'danger');
+      } finally {
+        document.getElementById('tts-submit-btn').disabled = false;
+      }
+    });
+
+    // STT sonuçlarını gösterme fonksiyonu
+    function displaySTTResult(result) {
+      const output = document.getElementById('stt-output');
+      output.innerHTML = '';
+      
+      // Metin kartı
+      const textCard = document.createElement('div');
+      textCard.className = 'card';
+      textCard.innerHTML = `
+        <div class="card-header">
+          <div class="card-title">
+            <i data-feather="file-text"></i>
+            Transkript Metni
+          </div>
+        </div>
+        <div class="card-body">
+          <p style="font-size: 16px; line-height: 1.8; color: var(--text-primary);">${result.text || '(Boş)'}</p>
+        </div>
+      `;
+      output.appendChild(textCard);
+      
+      // Segmentler
+      if (result.segments && result.segments.length > 0) {
+        const segmentsCard = document.createElement('div');
+        segmentsCard.className = 'card mt-4';
+        segmentsCard.innerHTML = `
+          <div class="card-header">
+            <div class="card-title">
+              <i data-feather="list"></i>
+              Segmentler (${result.segments.length})
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Başlangıç</th>
+                    <th>Bitiş</th>
+                    <th>Metin</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${result.segments.map(seg => `
+                    <tr>
+                      <td>${seg.start_sec}s</td>
+                      <td>${seg.end_sec}s</td>
+                      <td>${seg.text}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+        output.appendChild(segmentsCard);
+      }
+      
+      // JSON detayları (küçük)
+      const jsonCard = document.createElement('div');
+      jsonCard.className = 'mt-4';
+      jsonCard.innerHTML = `
+        <details>
+          <summary style="cursor: pointer; color: var(--text-muted); font-size: 12px;">JSON Detayları</summary>
+          <pre style="margin-top: 8px;">${JSON.stringify(result, null, 2)}</pre>
+        </details>
+      `;
+      output.appendChild(jsonCard);
+      
+      feather.replace();
+    }
+
+    // STT Playground - Dosya yükleme butonu
+    document.getElementById('stt-file-btn').addEventListener('click', () => {
+      document.getElementById('stt-file').click();
+    });
+
+    // STT Playground - Mikrofon kaydı
+    let sttMediaRecorder = null;
+    let sttAudioChunks = [];
+    
+    document.getElementById('stt-mic-btn').addEventListener('click', async () => {
+      try {
+        if (sttMediaRecorder && sttMediaRecorder.state === 'recording') {
+          // Kaydı durdur
+          sttMediaRecorder.stop();
+          document.getElementById('stt-mic-btn').innerHTML = '<i data-feather="mic"></i> Mikrofon Kaydı';
+          document.getElementById('stt-mic-btn').className = 'btn btn-success';
+          return;
+        }
+
+        // Mikrofon izni iste
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 16000
+          }
+        });
+
+        sttMediaRecorder = new MediaRecorder(stream);
+        sttAudioChunks = [];
+
+        sttMediaRecorder.ondataavailable = (event) => {
+          sttAudioChunks.push(event.data);
+        };
+
+        sttMediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(sttAudioChunks, { type: 'audio/wav' });
+          const form = new FormData();
+          form.append('audio_file', audioBlob, 'microphone.wav');
+          form.append('language', document.getElementById('stt-language').value);
+          form.append('timestamps', document.getElementById('stt-timestamps').value);
+
+          try {
+            showAlert('Ses çevriliyor...', 'info');
+            const result = await apiRequest('/stt', { method: 'POST', body: form });
+            displaySTTResult(result);
+            showAlert('STT başarılı!', 'success');
+          } catch (error) {
+            showJSON('stt-output', `Hata: ${error.message}`);
+            showAlert(`STT başarısız: ${error.message}`, 'danger');
+          }
+        };
+
+        sttMediaRecorder.start();
+        document.getElementById('stt-mic-btn').innerHTML = '<i data-feather="square"></i> Kaydı Durdur';
+        document.getElementById('stt-mic-btn').className = 'btn btn-danger';
+        showAlert('Mikrofon kaydı başlatıldı. Konuşun...', 'info');
+
+      } catch (error) {
+        showAlert(`Mikrofon hatası: ${error.message}`, 'danger');
+      }
+    });
+
+    // STT Playground - Dosya yükleme
+    document.getElementById('stt-submit-btn').addEventListener('click', async () => {
+      const fileInput = document.getElementById('stt-file');
+      const language = document.getElementById('stt-language').value;
+      const timestamps = document.getElementById('stt-timestamps').value;
+      
+      if (!fileInput.files.length) {
+        showAlert('Ses dosyası gerekli!', 'warning');
+        return;
+      }
+
+      const form = new FormData();
+      form.append('audio_file', fileInput.files[0]);
+      form.append('language', language);
+      form.append('timestamps', timestamps);
+      
+      try {
+        document.getElementById('stt-submit-btn').disabled = true;
+        showAlert('Ses çevriliyor...', 'info');
+        
+        const result = await apiRequest('/stt', { method: 'POST', body: form });
+        displaySTTResult(result);
+        showAlert('STT başarılı!', 'success');
+      } catch (error) {
+        showJSON('stt-output', `Hata: ${error.message}`);
+        showAlert(`STT başarısız: ${error.message}`, 'danger');
+      } finally {
+        document.getElementById('stt-submit-btn').disabled = false;
+      }
+    });
+
+    // Speak sonuçlarını gösterme fonksiyonu
+    function displaySpeakResult(result) {
+      const output = document.getElementById('speak-output');
+      output.innerHTML = '';
+      
+      if (result.audio_base64) {
+        output.appendChild(createAudioPlayer(result.audio_base64, result.mime_type));
+      }
+      
+      const pre = document.createElement('pre');
+      pre.textContent = JSON.stringify(result, null, 2);
+      output.appendChild(pre);
+    }
+
+    // Speak Playground - Dosya yükleme butonu
+    document.getElementById('speak-file-btn').addEventListener('click', () => {
+      document.getElementById('speak-file').click();
+    });
+
+    // Speak Playground - Mikrofon kaydı
+    let speakMediaRecorder = null;
+    let speakAudioChunks = [];
+    
+    document.getElementById('speak-mic-btn').addEventListener('click', async () => {
+      try {
+        if (speakMediaRecorder && speakMediaRecorder.state === 'recording') {
+          // Kaydı durdur
+          speakMediaRecorder.stop();
+          document.getElementById('speak-mic-btn').innerHTML = '<i data-feather="mic"></i> Mikrofon Kaydı';
+          document.getElementById('speak-mic-btn').className = 'btn btn-success';
+          return;
+        }
+
+        // Mikrofon izni iste
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 16000
+          }
+        });
+
+        speakMediaRecorder = new MediaRecorder(stream);
+        speakAudioChunks = [];
+
+        speakMediaRecorder.ondataavailable = (event) => {
+          speakAudioChunks.push(event.data);
+        };
+
+        speakMediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(speakAudioChunks, { type: 'audio/wav' });
+          const form = new FormData();
+          form.append('audio_file', audioBlob, 'microphone.wav');
+          
+          const selectedVoice = document.getElementById('speak-voice-select').value;
+          const manualId = document.getElementById('speak-voice-manual').value.trim();
+          
+          if (manualId) {
+            form.append('voice_id', manualId);
+          } else if (selectedVoice) {
+            form.append('voice_alias', selectedVoice);
+          }
+
+          try {
+            showAlert('İşleniyor...', 'info');
+            const result = await apiRequest('/ui/api/playground/speak', { method: 'POST', body: form });
+            displaySpeakResult(result);
+            showAlert('Speak başarılı!', 'success');
+          } catch (error) {
+            showJSON('speak-output', `Hata: ${error.message}`);
+            showAlert(`Speak başarısız: ${error.message}`, 'danger');
+          }
+        };
+
+        speakMediaRecorder.start();
+        document.getElementById('speak-mic-btn').innerHTML = '<i data-feather="square"></i> Kaydı Durdur';
+        document.getElementById('speak-mic-btn').className = 'btn btn-danger';
+        showAlert('Mikrofon kaydı başlatıldı. Konuşun...', 'info');
+
+      } catch (error) {
+        showAlert(`Mikrofon hatası: ${error.message}`, 'danger');
+      }
+    });
+
+    // Speak Playground - Dosya yükleme
+    document.getElementById('speak-submit-btn').addEventListener('click', async () => {
+      const fileInput = document.getElementById('speak-file');
+      const selectedVoice = document.getElementById('speak-voice-select').value;
+      const manualId = document.getElementById('speak-voice-manual').value.trim();
+      
+      if (!fileInput.files.length) {
+        showAlert('Ses dosyası gerekli!', 'warning');
+        return;
+      }
+      
+      const form = new FormData();
+      form.append('audio_file', fileInput.files[0]);
+      
+      if (manualId) {
+        form.append('voice_id', manualId);
+      } else if (selectedVoice) {
+        form.append('voice_alias', selectedVoice);
+      }
+      
+      try {
+        document.getElementById('speak-submit-btn').disabled = true;
+        showAlert('İşleniyor...', 'info');
+        
+        const result = await apiRequest('/ui/api/playground/speak', { method: 'POST', body: form });
+        displaySpeakResult(result);
+        showAlert('Speak chain başarılı!', 'success');
+      } catch (error) {
+        showJSON('speak-output', `Hata: ${error.message}`);
+        showAlert(`Speak başarısız: ${error.message}`, 'danger');
+      } finally {
+        document.getElementById('speak-submit-btn').disabled = false;
+      }
+    });
+
+    // Terms Functions
+    async function loadTerms() {
+      try {
+        const terms = await apiRequest('/ui/api/terms/list');
+        const tbody = document.getElementById('terms-tbody');
+        tbody.innerHTML = '';
+        
+        if (!terms || terms.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center">Terim bulunamadı.</td></tr>';
+          return;
+        }
+        
+        terms.forEach(term => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td><code>${term.src || ''}</code></td>
+            <td><code>${term.dst || ''}</code></td>
+            <td><span class="badge badge-info">${term.type || 'exact'}</span></td>
+            <td>${term.priority || 0}</td>
+            <td>
+              <button class="btn btn-danger btn-sm" onclick="deleteTerm('${term.src}')">
+                <i data-feather="trash-2"></i>
+              </button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+        
+        feather.replace();
+      } catch (error) {
+        showAlert(`Terimler yüklenemedi: ${error.message}`, 'danger');
+      }
+    }
+
+    window.deleteTerm = async function(src) {
+      if (!confirm(`"${src}" terimini silmek istediğinizden emin misiniz?`)) return;
+      try {
+        await apiRequest('/ui/api/terms/crud', {
+          method: 'POST',
+          body: { action: 'delete', data: { src } }
+        });
+        showAlert('Terim silindi!', 'success');
+        await loadTerms();
+      } catch (error) {
+        showAlert(`Hata: ${error.message}`, 'danger');
+      }
+    };
+
+    document.getElementById('refresh-terms-btn').addEventListener('click', loadTerms);
+
+    // Subscription Functions
+    async function loadSubscription() {
+      try {
+        const subscription = await apiRequest('/ui/api/subscription');
+        showJSON('subscription-output', subscription);
+        
+        // Kota kartları
+        const quotaContainer = document.getElementById('quota-cards');
+        quotaContainer.innerHTML = '';
+        
+        if (subscription.character_count !== undefined) {
+          const usedPct = subscription.character_limit > 0 
+            ? Math.round((subscription.character_count / subscription.character_limit) * 100) 
+            : 0;
+          
+          quotaContainer.innerHTML = `
+            <div class="stat-card">
+              <div class="stat-label">Kullanılan Karakter</div>
+              <div class="stat-value">${subscription.character_count.toLocaleString()}</div>
+              <div style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+                Limit: ${subscription.character_limit.toLocaleString()} (${usedPct}%)
+              </div>
+              <div style="margin-top: 8px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;">
+                <div style="width: ${usedPct}%; height: 100%; background: ${usedPct > 80 ? 'var(--danger)' : 'var(--success)'};"></div>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-label">Klonlanmış Sesler</div>
+              <div class="stat-value">${subscription.voice_limit || 'Sınırsız'}</div>
+              <div style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">
+                Plan: ${subscription.tier || 'N/A'}
+              </div>
+            </div>
+          `;
+        }
+        
+        // Modeller
+        const modelsResult = await apiRequest('/ui/api/models');
+        const modelsGrid = document.getElementById('models-grid');
+        modelsGrid.innerHTML = '';
+        
+        if (modelsResult.models && modelsResult.models.length > 0) {
+          modelsResult.models.forEach(model => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+              <div class="card-body">
+                <div style="font-weight: 600; margin-bottom: 4px;">${model.name || model.model_id}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">${model.description || ''}</div>
+                ${model.can_use_style ? '<span class="badge badge-success mt-2">Style Support</span>' : ''}
+                ${model.can_use_speaker_boost ? '<span class="badge badge-info mt-2">Speaker Boost</span>' : ''}
+              </div>
+            `;
+            modelsGrid.appendChild(card);
+          });
+        }
+        
+      } catch (error) {
+        showJSON('subscription-output', `Hata: ${error.message}`);
+      }
+    }
+
+    document.getElementById('refresh-subscription-btn').addEventListener('click', loadSubscription);
+    document.getElementById('refresh-models-btn').addEventListener('click', async () => {
+      try {
+        const modelsResult = await apiRequest('/ui/api/models');
+        const modelsGrid = document.getElementById('models-grid');
+        modelsGrid.innerHTML = '';
+        
+        if (modelsResult.models && modelsResult.models.length > 0) {
+          modelsResult.models.forEach(model => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+              <div class="card-body">
+                <div style="font-weight: 600; margin-bottom: 4px;">${model.name || model.model_id}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">${model.description || ''}</div>
+              </div>
+            `;
+            modelsGrid.appendChild(card);
+          });
+        }
+      } catch (error) {
+        showAlert(`Modeller yüklenemedi: ${error.message}`, 'danger');
+      }
+    });
+
+    // History Functions
+    async function loadHistory() {
+      try {
+        const limit = document.getElementById('history-limit').value;
+        const result = await apiRequest('/ui/api/history', { query: { page_size: limit } });
+        
+        const tbody = document.getElementById('history-tbody');
+        tbody.innerHTML = '';
+        
+        if (!result.history || result.history.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center">Geçmiş bulunamadı.</td></tr>';
+          return;
+        }
+        
+        result.history.forEach(item => {
+          const date = new Date(item.date_unix * 1000).toLocaleString('tr-TR');
+          const text = item.text || '';
+          const textPreview = text.length > 50 ? text.substring(0, 50) + '...' : text;
+          
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td style="white-space: nowrap;">${date}</td>
+            <td title="${text}">${textPreview}</td>
+            <td>${item.voice_name || 'N/A'}</td>
+            <td>${item.character_count_change || 0}</td>
+            <td>
+              <button class="btn btn-danger btn-sm" onclick="deleteHistoryItem('${item.history_item_id}')">
+                <i data-feather="trash-2"></i>
+              </button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+        
+        feather.replace();
+      } catch (error) {
+        showAlert(`Geçmiş yüklenemedi: ${error.message}`, 'danger');
+      }
+    }
+
+    window.deleteHistoryItem = async function(historyItemId) {
+      if (!confirm('Bu geçmiş kaydını silmek istediğinizden emin misiniz?')) return;
+      try {
+        await apiRequest(`/ui/api/history/${historyItemId}`, { method: 'DELETE' });
+        showAlert('Geçmiş kaydı silindi!', 'success');
+        await loadHistory();
+      } catch (error) {
+        showAlert(`Hata: ${error.message}`, 'danger');
+      }
+    };
+
+    document.getElementById('refresh-history-btn').addEventListener('click', loadHistory);
+    
+    document.getElementById('clear-history-btn').addEventListener('click', async () => {
+      if (!confirm('TÜM geçmişi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) return;
+      try {
+        const result = await apiRequest('/ui/api/history', { query: { page_size: 1000 } });
+        if (result.history && result.history.length > 0) {
+          for (const item of result.history) {
+            await apiRequest(`/ui/api/history/${item.history_item_id}`, { method: 'DELETE' });
+          }
+          showAlert('Tüm geçmiş temizlendi!', 'success');
+          await loadHistory();
+        }
+      } catch (error) {
+        showAlert(`Hata: ${error.message}`, 'danger');
+      }
+    });
+
+    // Monitoring Functions
+    async function loadMetrics() {
+      try {
+        const metrics = await apiRequest('/diag/metrics/summary');
+        showJSON('metrics-detail-output', metrics);
+      } catch (error) {
+        showJSON('metrics-detail-output', `Hata: ${error.message}`);
+      }
+    }
+
+    document.getElementById('refresh-metrics-detail-btn').addEventListener('click', loadMetrics);
+    
+    document.getElementById('refresh-logs-btn').addEventListener('click', async () => {
+      try {
+        const lines = document.getElementById('log-lines').value;
+        const result = await apiRequest('/ui/api/logs/tail', { query: { lines } });
+        
+        const output = document.getElementById('logs-output');
+        if (result.lines && result.lines.length > 0) {
+          const header = `Log: ${result.log_file}\nToplam satır: ${result.total_lines || 0} | Gösterilen: ${result.showing_lines || 0}\n${'='.repeat(80)}\n\n`;
+          output.textContent = header + result.lines.join('\n');
+        } else {
+          output.textContent = result.message || 'Henüz log verisi yok.';
+        }
+      } catch (error) {
+        showJSON('logs-output', `Hata: ${error.message}`);
+      }
+    });
+    
+    document.getElementById('refresh-circuit-btn').addEventListener('click', async () => {
+      try {
+        const circuit = await apiRequest('/ui/api/resilience');
+        showJSON('circuit-output', circuit);
+      } catch (error) {
+        showJSON('circuit-output', `Hata: ${error.message}`);
+      }
+    });
+
+    // Settings Functions
+    async function loadConfig() {
+      try {
+        const config = await apiRequest('/ui/api/config/read');
+        showJSON('config-output', config);
+      } catch (error) {
+        showJSON('config-output', `Hata: ${error.message}`);
+      }
+    }
+
+    document.getElementById('refresh-config-btn').addEventListener('click', loadConfig);
+    
+    document.getElementById('set-device-cpu-btn').addEventListener('click', async () => {
+      try {
+        await apiRequest('/ui/api/config/apply', {
+          method: 'POST',
+          body: { device: 'cpu' }
+        });
+        showAlert('Cihaz CPU olarak ayarlandı!', 'success');
+        await loadConfig();
+        await loadDashboard();
+      } catch (error) {
+        showAlert(`Hata: ${error.message}`, 'danger');
+      }
+    });
+    
+    document.getElementById('set-device-gpu-btn').addEventListener('click', async () => {
+      try {
+        await apiRequest('/ui/api/config/apply', {
+          method: 'POST',
+          body: { device: 'cuda' }
+        });
+        showAlert('Cihaz GPU/CUDA olarak ayarlandı!', 'success');
+        await loadConfig();
+        await loadDashboard();
+      } catch (error) {
+        showAlert(`Hata: ${error.message}`, 'danger');
+      }
+    });
+
+    // Security Functions
+    async function loadSecurity() {
+      try {
+        const security = await apiRequest('/ui/api/security');
+        showJSON('security-output', security);
+        
+        const limits = await apiRequest('/ui/api/limits');
+        showJSON('limits-output', limits);
+      } catch (error) {
+        showJSON('security-output', `Hata: ${error.message}`);
+      }
+    }
+
+    document.getElementById('refresh-security-btn').addEventListener('click', loadSecurity);
+    
+    document.getElementById('rotate-api-key-btn').addEventListener('click', async () => {
+      if (!confirm('Yeni bir API key oluşturmak istediğinizden emin misiniz?')) return;
+      try {
+        const result = await apiRequest('/ui/api/security/rotate', { method: 'POST' });
+        showAlert(`Yeni API Key: ${result.new_key}`, 'success');
+        await loadSecurity();
+      } catch (error) {
+        showAlert(`Hata: ${error.message}`, 'danger');
+      }
+    });
+
+    // Resilience Functions
+    async function loadResilience() {
+      try {
+        const resilience = await apiRequest('/ui/api/resilience');
+        showJSON('resilience-output', resilience);
+      } catch (error) {
+        showJSON('resilience-output', `Hata: ${error.message}`);
+      }
+    }
+
+    document.getElementById('refresh-resilience-btn').addEventListener('click', loadResilience);
+
+
+    // Update footer periodically
+    setInterval(async () => {
+      try {
+        const health = await apiRequest('/health');
+        document.getElementById('footer-device').textContent = health.device || 'N/A';
+        document.getElementById('footer-api-status').textContent = 'Bağlı';
+      } catch (e) {
+        document.getElementById('footer-api-status').textContent = 'Bağlantı Hatası';
+      }
+    }, 30000); // 30 saniyede bir güncelle
+
+    // Audio Isolation Functions
+    document.getElementById('isolation-submit-btn')?.addEventListener('click', async () => {
+      const fileInput = document.getElementById('isolation-file');
+      const outputDiv = document.getElementById('isolation-output');
+
+      if (!fileInput.files[0]) {
+        showAlert('Lütfen bir ses dosyası seçin!', 'warning');
+        return;
+      }
+
+      const isolationType = document.getElementById('isolation-type').value;
+      const noiseReduction = document.getElementById('noise-reduction').value;
+      const outputFormat = document.getElementById('output-format').value;
+
+      outputDiv.innerHTML = '<div class="text-center"><i data-feather="loader" class="animate-spin"></i> İşleniyor...</div>';
+
+      try {
+        const formData = new FormData();
+        formData.append('audio_file', fileInput.files[0]);
+        formData.append('isolation_type', isolationType);
+        formData.append('noise_reduction', noiseReduction);
+        formData.append('output_format', outputFormat);
+
+        const response = await fetch('/audio/isolation', {
+          method: 'POST',
+          headers: {
+            'X-API-Key': state.apiKey
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.detail || 'İşlem başarısız');
+        }
+
+        // İşlenmiş ses dosyasını indir
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `isolated_audio.${outputFormat}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        outputDiv.innerHTML = `
+          <div class="alert alert-success" id="success-alert">
+            <i data-feather="check-circle"></i>
+            Ses dosyası başarıyla işlendi ve indirildi!
+          </div>
+        `;
+        
+        // Alert'i 5 saniye sonra otomatik olarak kaldır
+        setTimeout(() => {
+          const alert = document.getElementById('success-alert');
+          if (alert) {
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateX(-50%) translateY(-20px)';
+            setTimeout(() => {
+              alert.remove();
+            }, 300);
+          }
+        }, 5000);
+
+        feather.replace();
+        showAlert('Ses dosyası başarıyla işlendi!', 'success');
+
+      } catch (error) {
+        outputDiv.innerHTML = `
+          <div class="alert alert-danger">
+            <i data-feather="x-circle"></i>
+            Hata: ${error.message}
+          </div>
+        `;
+        showAlert(`İşlem başarısız: ${error.message}`, 'danger');
+      } finally {
+        feather.replace();
+      }
+    });
+
+    document.getElementById('isolation-reset-btn')?.addEventListener('click', () => {
+      document.getElementById('isolation-file').value = '';
+      document.getElementById('isolation-type').value = 'voice_enhancement';
+      document.getElementById('noise-reduction').value = 'high';
+      document.getElementById('output-format').value = 'wav';
+      document.getElementById('isolation-output').innerHTML = '';
+    });
+
+    // Initialize
+    // Önce dashboard'ı yükle, sonra voice options
+    async function initialize() {
+      console.log('🚀 Uygulama başlatılıyor...');
+      await loadDashboard(); // Önce dashboard
+      
+      // Rate limit için kısa bir gecikme
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      await loadVoiceOptions(); // Sonra dropdown'lar
+      console.log('✅ Uygulama hazır!');
+    }
+    
+    initialize();
+  </script>
+</body>
+</html>
