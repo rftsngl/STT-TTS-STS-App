@@ -351,6 +351,8 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 - **[PROJECT_SUMMARY.md](PROJECT_SUMMARY.md)** - Project overview
 - **[MOBIL_API_DOKUMANTASYONU.md](MOBIL_API_DOKUMANTASYONU.md)** - API documentation (Turkish)
 
+Coming soon...
+
 ---
 
 ## 🤝 Contributing
@@ -386,8 +388,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support & Contact
 
 - **Issues:** [GitHub Issues](https://github.com/rftsngl/STT-TTS-STS-App/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/rftsngl/STT-TTS-STS-App/discussions)
-- **Email:** sinanogluailesi53@gmail.com
 
 ---
 
@@ -397,28 +397,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Faster-Whisper](https://github.com/SYSTRAN/faster-whisper) - STT model
 - [ElevenLabs](https://elevenlabs.io/) - TTS provider
 - [PyTorch](https://pytorch.org/) - Deep learning framework
-
----
-
-## 📈 Roadmap
-
-### v0.2.0 (Q1 2025)
-- [ ] Database migration (PostgreSQL)
-- [ ] Multi-tenancy support
-- [ ] Advanced analytics dashboard
-- [ ] Webhook support
-
-### v0.3.0 (Q2 2025)
-- [ ] Redis caching layer
-- [ ] Async task queue
-- [ ] Advanced voice cloning
-- [ ] Real-time streaming
-
-### v1.0.0 (Q3 2025)
-- [ ] Production hardening
-- [ ] Enterprise features
-- [ ] SLA monitoring
-- [ ] Advanced security
 
 ---
 
