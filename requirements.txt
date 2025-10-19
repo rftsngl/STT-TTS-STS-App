@@ -1,3 +1,4 @@
+# Core dependencies
 fastapi==0.119.0
 uvicorn[standard]==0.37.0
 python-dotenv==1.1.1
@@ -8,14 +9,23 @@ numpy==2.1.2
 soundfile==0.13.1
 pydub==0.25.1
 webrtcvad==2.0.10
-torch==2.5.1+cu121
-torchvision==0.20.1+cu121
-torchaudio==2.5.1+cu121
-faster-whisper==1.2.0
 av==16.0.0
 python-multipart==0.0.20
 sounddevice==0.5.2
-elevenlabs==2.17.0
 httpx==0.28.1
 noisereduce==3.0.3
 psutil==6.1.0
+
+# Database and encryption
+cryptography==42.0.5
+
+# TTS/STT providers
+elevenlabs==2.17.0
+
+# Optional: GPU acceleration (CUDA)
+torch==2.5.1+cu121
+torchvision==0.20.1+cu121
+torchaudio==2.5.1+cu121
+
+# Optional: Local STT with Faster-Whisper
+faster-whisper==1.2.0

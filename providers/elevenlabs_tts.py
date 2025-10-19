@@ -634,6 +634,208 @@ class ElevenLabsProvider:
 
         raise ElevenLabsError(500, "ISOLATION_FAILED", "Audio isolation işlemi başarısız oldu")
 
+    async def transcribe_audio(
+        self,
+        audio_data: bytes,
+        *,
+        language: Optional[str] = None,
+        model: str = "eleven_multilingual_v2",
+        timestamps: bool = False,
+    ) -> Dict[str, object]:
+        """
+        Transcribe audio using ElevenLabs Speech-to-Text API.
+
+        Args:
+            audio_data: Audio file bytes (WAV, MP3, M4A, FLAC supported)
+            language: Optional language code (e.g., 'tr', 'en')
+            model: STT model to use (default: eleven_multilingual_v2)
+            timestamps: Whether to include word-level timestamps
+
+        Returns:
+            Dictionary with transcription results:
+            {
+                "text": str,
+                "segments": List[Dict] (if timestamps=True),
+                "language": str,
+                "duration": float
+            }
+        """
+        url = f"{self.BASE_URL}/v1/speech-to-text"
+
+        # Prepare multipart form data
+        files = {"audio": ("audio.wav", audio_data, "audio/wav")}
+
+        data = {
+            "model": model,
+        }
+
+        if language:
+            data["language"] = language
+
+        if timestamps:
+            data["timestamps"] = "true"
+
+        logger.debug(
+            "ElevenLabs STT çağrılıyor (model={}, language={}, timestamps={})",
+            model,
+            language,
+            timestamps
+        )
+
+        headers = {
+            "xi-api-key": self.api_key,
+        }
+
+        last_error: Optional[Exception] = None
+        for attempt in range(self._retries + 1):
+            try:
+                response = self._session.post(
+                    url,
+                    data=data,
+                    files=files,
+                    headers=headers,
+                    timeout=(self._connect_timeout, self._read_timeout),
+                )
+                self._raise_for_status(response)
+
+                result = response.json()
+                logger.debug("ElevenLabs STT başarılı: {} karakter", len(result.get("text", "")))
+                return result
+
+            except requests.exceptions.Timeout as exc:
+                last_error = exc
+                if attempt < self._retries:
+                    delay = self._compute_delay(attempt)
+                    logger.warning("ElevenLabs STT timeout retry %d/%d in %.3fs", attempt + 1, self._retries, delay)
+                    if delay:
+                        time.sleep(delay)
+                else:
+                    raise ElevenLabsError(504, "UPSTREAM_TIMEOUT", str(exc)) from exc
+
+            except requests.exceptions.ConnectionError as exc:
+                last_error = exc
+                if attempt < self._retries:
+                    delay = self._compute_delay(attempt)
+                    logger.warning("ElevenLabs STT connection error retry %d/%d in %.3fs", attempt + 1, self._retries, delay)
+                    if delay:
+                        time.sleep(delay)
+                else:
+                    raise ElevenLabsError(503, "CONNECTION_ERROR", str(exc)) from exc
+
+            except ElevenLabsError:
+                raise
+
+            except Exception as exc:
+                last_error = exc
+                if attempt < self._retries:
+                    logger.warning("ElevenLabs STT retry %d: %s", attempt + 1, exc)
+                    await asyncio.sleep(2 ** attempt)
+                else:
+                    logger.error("ElevenLabs STT başarısız: %s", exc)
+
+        if last_error:
+            raise ElevenLabsError(500, "STT_FAILED", f"Speech-to-text başarısız: {str(last_error)}")
+
+        raise ElevenLabsError(500, "STT_FAILED", "Speech-to-text işlemi başarısız oldu")
+
+    def transcribe_audio_sync(
+        self,
+        audio_data: bytes,
+        *,
+        language: Optional[str] = None,
+        model: str = "eleven_multilingual_v2",
+        timestamps: bool = False,
+    ) -> Dict[str, object]:
+        """
+        Synchronous version of transcribe_audio.
+
+        Args:
+            audio_data: Audio file bytes (WAV, MP3, M4A, FLAC supported)
+            language: Optional language code (e.g., 'tr', 'en')
+            model: STT model to use (default: eleven_multilingual_v2)
+            timestamps: Whether to include word-level timestamps
+
+        Returns:
+            Dictionary with transcription results
+        """
+        url = f"{self.BASE_URL}/v1/speech-to-text"
+
+        # Prepare multipart form data
+        files = {"audio": ("audio.wav", audio_data, "audio/wav")}
+
+        data = {
+            "model": model,
+        }
+
+        if language:
+            data["language"] = language
+
+        if timestamps:
+            data["timestamps"] = "true"
+
+        logger.debug(
+            "ElevenLabs STT (sync) çağrılıyor (model={}, language={}, timestamps={})",
+            model,
+            language,
+            timestamps
+        )
+
+        headers = {
+            "xi-api-key": self.api_key,
+        }
+
+        last_error: Optional[Exception] = None
+        for attempt in range(self._retries + 1):
+            try:
+                response = self._session.post(
+                    url,
+                    data=data,
+                    files=files,
+                    headers=headers,
+                    timeout=(self._connect_timeout, self._read_timeout),
+                )
+                self._raise_for_status(response)
+
+                result = response.json()
+                logger.debug("ElevenLabs STT (sync) başarılı: {} karakter", len(result.get("text", "")))
+                return result
+
+            except requests.exceptions.Timeout as exc:
+                last_error = exc
+                if attempt < self._retries:
+                    delay = self._compute_delay(attempt)
+                    logger.warning("ElevenLabs STT timeout retry %d/%d in %.3fs", attempt + 1, self._retries, delay)
+                    if delay:
+                        time.sleep(delay)
+                else:
+                    raise ElevenLabsError(504, "UPSTREAM_TIMEOUT", str(exc)) from exc
+
+            except requests.exceptions.ConnectionError as exc:
+                last_error = exc
+                if attempt < self._retries:
+                    delay = self._compute_delay(attempt)
+                    logger.warning("ElevenLabs STT connection error retry %d/%d in %.3fs", attempt + 1, self._retries, delay)
+                    if delay:
+                        time.sleep(delay)
+                else:
+                    raise ElevenLabsError(503, "CONNECTION_ERROR", str(exc)) from exc
+
+            except ElevenLabsError:
+                raise
+
+            except Exception as exc:
+                last_error = exc
+                if attempt < self._retries:
+                    logger.warning("ElevenLabs STT retry %d: %s", attempt + 1, exc)
+                    time.sleep(2 ** attempt)
+                else:
+                    logger.error("ElevenLabs STT başarısız: %s", exc)
+
+        if last_error:
+            raise ElevenLabsError(500, "STT_FAILED", f"Speech-to-text başarısız: {str(last_error)}")
+
+        raise ElevenLabsError(500, "STT_FAILED", "Speech-to-text işlemi başarısız oldu")
+
     @property
     def last_stream_metadata(self) -> Dict[str, object]:
         return dict(self._last_stream_metadata)

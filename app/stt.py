@@ -16,6 +16,7 @@ from .noise import reduce_noise_offline
 from .textnorm import apply_terms, normalize_text, summarize_term_changes
 from .models_rt import get_device_metadata
 from .security.api_key import require_api_key
+from .stt_provider import get_stt_manager, STTProviderError
 
 try:  # pragma: no cover - optional dependency
     import torch  # type: ignore
@@ -155,12 +156,8 @@ async def transcribe_audio(
     audio_file: UploadFile = File(...),
     language: Optional[str] = Form(None),
     timestamps: Optional[str] = Form(None),
+    provider: Optional[str] = Form(None),
 ) -> JSONResponse:
-    if WhisperModel is None:
-        return _json_error(
-            503,
-            {"code": "STT_UNAVAILABLE", "message": "faster-whisper paketini kurmadan STT kullanılamaz"},
-        )
     settings = get_settings()
     language = language or settings.default_language
     timestamps = timestamps or settings.default_timestamps
@@ -190,13 +187,10 @@ async def transcribe_audio(
             return _json_error(413, {"code": "AUDIO_TOO_LONG", "limit_sec": settings.max_duration_seconds})
 
         include_words = timestamps == "words"
-        device_choice = _determine_device(settings.device)
-        try:
-            model = _get_model(device_choice)
-        except RuntimeError as exc:
-            return _json_error(503, {"code": "STT_UNAVAILABLE", "message": str(exc)})
+
+        # Get device metadata for metrics (used by faster-whisper)
         meta = get_device_metadata()
-        effective_device = meta.get("effective", device_choice)
+        effective_device = meta.get("effective", "unknown")
         metrics["device_fallback_reason"] = meta.get("fallback_reason")
 
         noise_ms = 0.0
@@ -213,37 +207,55 @@ async def transcribe_audio(
                 logger.debug("Noise suppression skipped: {}", exc)
             noise_ms = noise_span.duration_ms
 
+        # Use STT provider manager for transcription
         span_stt = Span()
-        segments_iter, _ = model.transcribe(
-            str(converted_path),
-            language=language,
-            vad_filter=True,
-            beam_size=5,
-            word_timestamps=include_words,
-        )
-        stt_ms = span_stt.duration_ms
-        span_norm = Span()
-        segments, final_text, term_changes = _prepare_segments(segments_iter, include_words)
-        norm_ms = span_norm.duration_ms
-        response: Dict[str, Any] = {"text": final_text, "segments": segments}
-        terms_summary = summarize_term_changes(term_changes)
-        metrics.update(
-            {
-                "device": effective_device or device_choice,
-                "compute_type": getattr(model, "compute_type", None),
-                "model": MODEL_NAME,
-                "decode_ms": round(decode_ms, 2),
-                "noise_ms": round(noise_ms, 2),
-                "vad_ms": 0.0,
-                "stt_ms": round(stt_ms, 2),
-                "norm_ms": round(norm_ms, 2),
-                "terms_changes": terms_summary["count"],
-                "terms_preview": terms_summary["items"],
-                "tts_queue_ms": 0.0,
-                "tts_stream_ms": 0.0,
-                "total_ms": round(span_total.duration_ms, 2),
-            }
-        )
+        try:
+            stt_manager = get_stt_manager()
+            result = stt_manager.transcribe(
+                converted_path,
+                language=language,
+                timestamps=include_words,
+                provider_name=provider,
+            )
+            stt_ms = span_stt.duration_ms
+
+            # Extract results
+            final_text = result.get("text", "")
+            segments = result.get("segments", [])
+            used_provider = result.get("provider", "unknown")
+            model_name = result.get("model", "unknown")
+
+            # Apply term normalization if needed
+            span_norm = Span()
+            term_changes = []
+            if settings.terms_file and final_text:
+                from .textnorm import apply_terms
+                final_text, term_changes = apply_terms(final_text, settings)
+            norm_ms = span_norm.duration_ms
+
+            response: Dict[str, Any] = {"text": final_text, "segments": segments}
+            terms_summary = summarize_term_changes(term_changes)
+
+            metrics.update(
+                {
+                    "device": effective_device,
+                    "provider": used_provider,
+                    "model": model_name,
+                    "decode_ms": round(decode_ms, 2),
+                    "noise_ms": round(noise_ms, 2),
+                    "vad_ms": 0.0,
+                    "stt_ms": round(stt_ms, 2),
+                    "norm_ms": round(norm_ms, 2),
+                    "terms_changes": terms_summary["count"],
+                    "terms_preview": terms_summary["items"],
+                    "tts_queue_ms": 0.0,
+                    "tts_stream_ms": 0.0,
+                    "total_ms": round(span_total.duration_ms, 2),
+                }
+            )
+        except STTProviderError as exc:
+            logger.error("STT provider error: {}", exc)
+            return _json_error(503, {"code": "STT_UNAVAILABLE", "message": str(exc)})
         log_metrics(metrics)
         return JSONResponse(status_code=200, content=response)
     except ValueError as exc:

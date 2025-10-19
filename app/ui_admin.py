@@ -15,15 +15,17 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 import httpx
 from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, Response
+from loguru import logger
 from starlette.concurrency import run_in_threadpool
 
 from dotenv import dotenv_values
 
 from app.config import get_settings
+from app.database import get_database, DatabaseError, EncryptionError
 from app.security.api_key import is_enabled, mask as mask_key, verify_api_key
 from app.terms_api import _parse_csv_entries, _parse_json_entries
 from app.terms_store import get_terms_store
-from app.voice_utils import get_eleven_provider
+from app.voice_utils import get_eleven_provider, clear_provider_cache
 from providers.elevenlabs_tts import ElevenLabsError, save_alias
 
 
@@ -36,8 +38,10 @@ RESTART_SCRIPT = TOOLS_DIR / "restart_app.ps1"
 
 ENV_BACKUP_TEMPLATE = ".env.{timestamp}.bak"
 CONFIG_LOCK = asyncio.Lock()
-MAX_BACKUPS = 50
-MAX_LOG_LINES = 400
+
+# Configuration limits for admin operations
+MAX_BACKUPS = 50  # Maximum number of .env backup files to keep
+MAX_LOG_LINES = 400  # Maximum number of log lines to display in admin UI
 
 CONFIG_EXPLICIT_KEYS = {
     "ELEVEN_DEFAULT_VOICE_ALIAS",
@@ -64,22 +68,11 @@ CONFIG_EXPLICIT_KEYS = {
     "UPSTREAM_READ_TIMEOUT_SEC",
 }
 
-CONFIG_PREFIX_WHITELIST = ("RATE_LIMIT_", "RESILIENCE_")
+CONFIG_PREFIX_WHITELIST = ("RATE_LIMIT_",)
 
 
 SENSITIVE_KEYS = {"API_KEY", "XI_API_KEY"}
 BOOLEAN_KEYS = {"ENABLE_SECURITY"}
-
-RESILIENCE_KEYS = {
-    "CB_FAILURE_RATIO",
-    "CB_WINDOW",
-    "CB_COOLDOWN_MS",
-    "CB_HALF_OPEN_MAX",
-    "BACKOFF_RETRIES",
-    "BACKOFF_BASE_MS",
-    "BACKOFF_MAX_MS",
-    "BACKOFF_JITTER_MS",
-}
 
 LIMIT_KEYS = [
     "RATE_LIMIT_GLOBAL_RPM",
@@ -105,20 +98,7 @@ def _collect_limit_entries(settings) -> List[Dict[str, Any]]:
     return entries
 
 
-def _collect_resilience_entries(settings) -> List[Dict[str, Any]]:
-    env_map = _filter_allowed(_read_env_map())
-    entries: List[Dict[str, Any]] = []
-    for key in sorted(RESILIENCE_KEYS):
-        env_value = env_map.get(key)
-        effective_value = getattr(settings, key.lower(), None)
-        entries.append(
-            {
-                "key": key,
-                "value": env_value or "",
-                "effective": effective_value,
-            }
-        )
-    return entries
+# _collect_resilience_entries removed - resilience components no longer used
 
 
 router = APIRouter(prefix="/ui", tags=["ui"])
@@ -490,6 +470,15 @@ def _config_read_sync(admin_unlocked: bool) -> Dict[str, Any]:
         env_key = name.upper()
         if _is_allowed_key(env_key):
             allowed.add(env_key)
+
+    # Check database for API keys
+    db_api_key = None
+    try:
+        db = get_database()
+        db_api_key = db.get_api_key("elevenlabs")
+    except (DatabaseError, EncryptionError) as e:
+        logger.debug("Could not retrieve API key from database: %s", str(e))
+
     entries: List[Dict[str, Any]] = []
     for key in sorted(allowed):
         if not _is_allowed_key(key):
@@ -497,6 +486,11 @@ def _config_read_sync(admin_unlocked: bool) -> Dict[str, Any]:
         env_value = env_map.get(key)
         attr_name = key.lower()
         effective_value = getattr(settings, attr_name, None)
+
+        # Override XI_API_KEY with database value if available
+        if key == "XI_API_KEY" and db_api_key:
+            effective_value = db_api_key
+
         value_field = ""
         if env_value is not None and key not in SENSITIVE_KEYS:
             value_field = str(env_value)
@@ -506,6 +500,7 @@ def _config_read_sync(admin_unlocked: bool) -> Dict[str, Any]:
             "masked": _display_value(key, env_value),
             "effective": _display_value(key, _normalize_env_value(effective_value) if effective_value is not None else None),
             "from_env": env_value is not None,
+            "from_database": key == "XI_API_KEY" and db_api_key is not None,
             "is_sensitive": key in SENSITIVE_KEYS,
             "editable": admin_unlocked,
         }
@@ -542,16 +537,17 @@ async def _safe_internal_json(
             admin=admin,
             timeout=timeout,
         )
-    except Exception:
+    except (httpx.HTTPError, httpx.TimeoutException, ConnectionError) as exc:
+        logger.debug("Internal API call failed: {}", exc)
         return None
     if response.status_code >= 400:
         try:
             return response.json()
-        except Exception:
+        except (ValueError, httpx.DecodingError):
             return {"error": response.status_code, "detail": response.text}
     try:
         return response.json()
-    except Exception:
+    except (ValueError, httpx.DecodingError):
         return None
 
 
@@ -686,41 +682,19 @@ async def _status_payload(request: Request) -> Dict[str, Any]:
         "rate_bucket_burst": settings.rate_bucket_burst,
     }
 
-
-    resilience_info = {
-        "cb_failure_ratio": settings.cb_failure_ratio,
-        "cb_window": settings.cb_window,
-        "cb_cooldown_ms": settings.cb_cooldown_ms,
-        "cb_half_open_max": settings.cb_half_open_max,
-        "backoff_retries": settings.backoff_retries,
-        "backoff_base_ms": settings.backoff_base_ms,
-        "backoff_max_ms": settings.backoff_max_ms,
-        "backoff_jitter_ms": settings.backoff_jitter_ms,
-    }
-
-    cb_counts = {}
-    if isinstance(metrics, dict):
-        counts = metrics.get("cb_state_counts")
-        if isinstance(counts, dict):
-            cb_counts = counts
-
     config_data: Optional[Dict[str, Any]] = None
     try:
         config_data = await run_in_threadpool(_config_read_sync, admin_unlocked)
-    except Exception:
+    except (OSError, ValueError, KeyError) as exc:
+        logger.debug("Failed to read config: {}", exc)
         partial_errors.append("config")
 
     try:
         limit_entries = _collect_limit_entries(settings)
-    except Exception:
+    except (AttributeError, ValueError) as exc:
+        logger.debug("Failed to collect limit entries: {}", exc)
         limit_entries = []
         partial_errors.append("limits")
-
-    try:
-        resilience_entries = _collect_resilience_entries(settings)
-    except Exception:
-        resilience_entries = []
-        partial_errors.append("resilience")
 
     return {
         "generated_at": _now_iso(),
@@ -729,8 +703,6 @@ async def _status_payload(request: Request) -> Dict[str, Any]:
         "security": security_info,
         "default_voice": default_voice,
         "limits": limits_info,
-        "resilience": resilience_info,
-        "cb_state_counts": cb_counts,
         "health": health_payload,
         "compute": compute_info,
         "metrics": metrics,
@@ -744,11 +716,6 @@ async def _status_payload(request: Request) -> Dict[str, Any]:
             "admin_mode": admin_mode_flag,
             "admin_unlocked": admin_unlocked,
         },
-        "resilience_data": {
-            "entries": resilience_entries,
-            "admin_mode": admin_mode_flag,
-            "admin_unlocked": admin_unlocked,
-        },
         "partial_errors": partial_errors,
     }
 
@@ -757,7 +724,7 @@ async def _collect_audio_bytes(response: httpx.Response) -> bytes:
     if response.status_code >= 400:
         try:
             detail = response.json()
-        except Exception:
+        except (ValueError, httpx.DecodingError):
             detail = {"detail": response.text or "Upstream error"}
         raise HTTPException(status_code=response.status_code, detail=detail)
     chunks: List[bytes] = []
@@ -914,7 +881,7 @@ async def limits_read(request: Request) -> Dict[str, Any]:
     return {
         "entries": entries,
         "admin_mode": _admin_mode(settings),
-        "admin_unlocked": _has_valid_admin_header(request, settings),
+        "admin_unlocked": _has_valid_admin_header(request),
     }
 
 
@@ -942,7 +909,7 @@ async def security_read(request: Request) -> Dict[str, Any]:
     settings = get_settings()
     return {
         "admin_mode": _admin_mode(settings),
-        "admin_unlocked": _has_valid_admin_header(request, settings),
+        "admin_unlocked": _has_valid_admin_header(request),
         "enable_security": settings.enable_security,
         "api_key_masked": _mask(settings.api_key),
         "xi_api_key_masked": _mask(settings.xi_api_key),
@@ -987,31 +954,49 @@ async def save_elevenlabs_key(request: Request) -> Dict[str, Any]:
     # No API key required for this endpoint (used during login)
     payload = await request.json()
     api_key = payload.get("api_key", "").strip()
-    
+
     if not api_key:
         raise HTTPException(status_code=400, detail={"code": "MISSING_KEY", "message": "API key gerekli"})
-    
+
     if not api_key.startswith("sk_"):
         raise HTTPException(status_code=400, detail={"code": "INVALID_KEY", "message": "ElevenLabs API key 'sk_' ile başlamalı"})
-    
+
     # API key'i doğrula (basit format kontrolü)
     if len(api_key) < 20:
         raise HTTPException(status_code=400, detail={"code": "INVALID_KEY", "message": "Geçersiz API key formatı"})
-    
+
     try:
-        async with CONFIG_LOCK:
-            result = await run_in_threadpool(_config_apply_sync, {"XI_API_KEY": api_key}, True)
-        
-        if result.get("applied"):
-            return {
-                "success": True,
-                "message": "ElevenLabs API key başarıyla kaydedildi",
-                "masked_key": _mask(api_key)
+        # Save to database ONLY (no .env file fallback)
+        db = get_database()
+        await run_in_threadpool(
+            db.add_api_key,
+            "elevenlabs",
+            "default",
+            api_key,
+            True
+        )
+        logger.info("ElevenLabs API key saved to database")
+
+        # Clear provider cache to force recreation with new key
+        clear_provider_cache()
+
+        return {
+            "success": True,
+            "message": "ElevenLabs API key başarıyla kaydedildi",
+            "masked_key": _mask(api_key)
+        }
+    except (DatabaseError, EncryptionError) as e:
+        logger.error("Database error saving ElevenLabs API key: %s", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "code": "SAVE_FAILED",
+                "message": f"API key kaydedilemedi: {str(e)}. ENCRYPTION_KEY ayarlandığından emin olun."
             }
-        else:
-            logger.error("Failed to apply config: %s", result)
-            raise HTTPException(status_code=500, detail={"code": "SAVE_FAILED", "message": "API key kaydedilemedi"})
-    except Exception as e:
+        )
+    except HTTPException:
+        raise
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error saving ElevenLabs API key: %s", str(e))
         raise HTTPException(status_code=500, detail={"code": "SAVE_FAILED", "message": f"API key kaydedilemedi: {str(e)}"})
 
@@ -1019,43 +1004,23 @@ async def save_elevenlabs_key(request: Request) -> Dict[str, Any]:
 @router.get("/api/config/elevenlabs-key")
 async def get_elevenlabs_key_status(request: Request) -> Dict[str, Any]:
     # No API key required for this endpoint (used during login)
-    settings = get_settings()
-    
+
+    # Check database only (no .env fallback)
+    api_key = None
+    try:
+        db = get_database()
+        api_key = await run_in_threadpool(db.get_api_key, "elevenlabs")
+    except (DatabaseError, EncryptionError) as e:
+        logger.debug("Could not retrieve API key from database: %s", str(e))
+
     return {
-        "configured": bool(settings.xi_api_key),
-        "masked_key": _mask(settings.xi_api_key) if settings.xi_api_key else None,
-        "has_valid_format": settings.xi_api_key.startswith("sk_") if settings.xi_api_key else False
+        "configured": bool(api_key),
+        "masked_key": _mask(api_key) if api_key else None,
+        "has_valid_format": api_key.startswith("sk_") if api_key else False
     }
 
 
-@router.get("/api/resilience")
-async def resilience_read(request: Request) -> Dict[str, Any]:
-    _require_api_key_header(request)
-    settings = get_settings()
-    entries = _collect_resilience_entries(settings)
-    return {
-        "entries": entries,
-        "admin_mode": _admin_mode(settings),
-        "admin_unlocked": _has_valid_admin_header(request, settings),
-    }
-
-
-@router.post("/api/resilience/preview")
-async def resilience_preview(request: Request) -> Dict[str, Any]:
-    _require_admin_key(request)
-    payload = await request.json()
-    updates = {key: value for key, value in (payload.get("updates") or {}).items() if key in RESILIENCE_KEYS or key.startswith("RESILIENCE_")}
-    return await run_in_threadpool(_config_preview_sync, updates)
-
-
-@router.post("/api/resilience/apply")
-async def resilience_apply(request: Request) -> Dict[str, Any]:
-    _require_admin_key(request)
-    payload = await request.json()
-    updates = {key: value for key, value in (payload.get("updates") or {}).items() if key in RESILIENCE_KEYS or key.startswith("RESILIENCE_")}
-    async with CONFIG_LOCK:
-        result = await run_in_threadpool(_config_apply_sync, updates, True)
-    return result
+# Resilience endpoints removed - resilience components are no longer used
 
 
 @router.get("/api/voices")
@@ -1177,7 +1142,7 @@ async def delete_alias_endpoint(request: Request, alias: str) -> Dict[str, Any]:
     try:
         delete_alias(alias)
         return {"status": "success", "message": f"Alias {alias} deleted"}
-    except Exception as exc:
+    except (KeyError, ValueError, OSError) as exc:
         raise HTTPException(status_code=500, detail={"code": "DELETE_FAILED", "message": str(exc)}) from exc
 
 
@@ -1268,7 +1233,7 @@ async def terms_list(request: Request) -> Dict[str, Any]:
     entries = store.list_entries()
     stats = store.stats()
     settings = get_settings()
-    admin_required = _admin_mode(settings) and not _has_valid_admin_header(request, settings)
+    admin_required = _admin_mode(settings) and not _has_valid_admin_header(request)
     return {
         "entries": entries,
         "stats": stats, # entries listesindeki her objenin id'si var
@@ -1360,16 +1325,16 @@ async def logs_tail(request: Request, lines: int = Query(100, ge=1, le=10000)) -
         with metrics_path.open("r", encoding="utf-8") as f:
             all_lines = f.readlines()
             tail_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
-            
+
         return {
             "log_file": str(metrics_path),
             "total_lines": len(all_lines),
             "showing_lines": len(tail_lines),
             "lines": [line.strip() for line in tail_lines]
         }
-    except Exception as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail={"code": "READ_ERROR", "message": f"Failed to read log: {str(exc)}"}
         ) from exc
 
@@ -1406,9 +1371,17 @@ async def playground_tts(request: Request) -> Dict[str, Any]:
     if not text:
         raise HTTPException(status_code=422, detail={"code": "EMPTY_TEXT", "message": "Text is required"})
     body = {"text": text}
-    for key in ("voice_alias", "voice_id", "model_id", "output_format", "voice_settings"):
-        if payload.get(key):
+
+    # Pass through all TTS request fields that match TTSRequest schema
+    optional_fields = (
+        "voice_alias", "voice_id", "model_id", "output_format", "language",
+        "stability", "similarity_boost", "style", "use_speaker_boost",
+        "optimize_streaming_latency", "use_voice_consistency"
+    )
+    for key in optional_fields:
+        if key in payload and payload[key] is not None:
             body[key] = payload[key]
+
     response = await _call_internal(request, "POST", "/tts", json_body=body, timeout=120.0)
     audio = await _collect_audio_bytes(response)
     mime_type = response.headers.get("content-type") or "audio/mpeg"

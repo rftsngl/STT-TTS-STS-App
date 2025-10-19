@@ -9,6 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict
 
+import httpx
 from fastapi import APIRouter
 from loguru import logger
 
@@ -16,6 +17,7 @@ from app.config import get_settings
 from app.terms_store import get_terms_store
 from app.models_rt import get_device_metadata
 from app.voice_utils import get_eleven_provider
+from providers.elevenlabs_tts import ElevenLabsError
 
 try:
     import torch
@@ -72,7 +74,7 @@ def _torch_cuda_available() -> bool:
         return False
     try:
         return bool(torch.cuda.is_available())
-    except Exception as exc:  # pragma: no cover
+    except (RuntimeError, AttributeError) as exc:  # pragma: no cover
         logger.debug("Torch CUDA availability check failed: {}", exc)
         return False
 
@@ -82,7 +84,7 @@ def _ctranslate2_cuda_count() -> int:
         return 0
     try:
         return int(ctranslate2.get_cuda_device_count())  # type: ignore[name-defined]
-    except Exception as exc:  # pragma: no cover
+    except (RuntimeError, AttributeError, ValueError) as exc:  # pragma: no cover
         logger.debug("CTranslate2 CUDA device check failed: {}", exc)
         return 0
 
@@ -119,7 +121,7 @@ def _metrics_summary() -> Dict[str, Any] | None:
         if stt_values:
             summary["avg_stt_ms"] = round(sum(stt_values) / len(stt_values), 2)
         return summary
-    except Exception as exc:  # pragma: no cover
+    except (OSError, UnicodeDecodeError, ValueError) as exc:  # pragma: no cover
         logger.debug("Failed to read metrics summary: {}", exc)
         return None
 
@@ -128,7 +130,7 @@ def _terms_status() -> Dict[str, Any] | None:
     try:
         store = get_terms_store()
         stats = store.stats()
-    except Exception as exc:  # pragma: no cover
+    except (RuntimeError, AttributeError, OSError) as exc:  # pragma: no cover
         logger.debug("Terms status unavailable: {}", exc)
         return None
     return {
@@ -148,7 +150,7 @@ def _elevenlabs_status() -> Dict[str, Any]:
                 "status": "not_configured",
                 "message": "ElevenLabs API key not configured"
             }
-        
+
         # API test yap
         voices = provider.list_voices()
         return {
@@ -157,7 +159,14 @@ def _elevenlabs_status() -> Dict[str, Any]:
             "voice_count": len(voices),
             "message": "ElevenLabs API is working"
         }
-    except Exception as exc:
+    except ElevenLabsError as exc:
+        logger.debug("ElevenLabs status check failed: {}", exc)
+        return {
+            "configured": True,
+            "status": "error",
+            "message": f"ElevenLabs API error: {exc.detail}"
+        }
+    except (httpx.HTTPError, httpx.TimeoutException, ValueError, KeyError) as exc:
         logger.debug("ElevenLabs status check failed: {}", exc)
         return {
             "configured": True,
@@ -169,10 +178,7 @@ def _elevenlabs_status() -> Dict[str, Any]:
 def _resilience_status() -> Dict[str, Any]:
     """Resilience bileşenlerinin durumunu kontrol et"""
     return {
-        "circuit_breaker": {"status": "not_implemented", "message": "Circuit breaker not implemented"},
-        "heartbeat": {"status": "not_implemented", "message": "Heartbeat monitor not implemented"},
-        "queues": {"status": "not_implemented", "message": "Queue monitor not implemented"},
-        "watchdog": {"status": "not_implemented", "message": "Watchdog not implemented"}
+        "watchdog": {"status": "active", "message": "Watchdog timeout protection is active"}
     }
 
 
@@ -205,7 +211,7 @@ def _system_resources() -> Dict[str, Any]:
         }
     except ImportError:
         return {"status": "psutil not available"}
-    except Exception as exc:
+    except (OSError, AttributeError, ValueError) as exc:
         return {"status": "error", "message": str(exc)}
 
 

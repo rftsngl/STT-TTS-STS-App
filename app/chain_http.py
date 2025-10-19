@@ -20,9 +20,9 @@ from app.resilience.watchdog import wrap_stream
 from app.voice_utils import get_eleven_provider, media_type_for_format, resolve_voice_id
 from providers.elevenlabs_tts import ElevenLabsError
 from app.textnorm import summarize_term_changes
-from app.stt import MODEL_NAME, _determine_device, _get_model, _prepare_segments
 from app.models_rt import get_device_metadata
 from app.security.api_key import require_api_key
+from app.stt_provider import get_stt_manager, STTProviderError
 
 router = APIRouter()
 
@@ -90,16 +90,9 @@ async def speak_http(
                 detail={"code": "AUDIO_TOO_LONG", "limit_sec": settings.max_duration_seconds},
             )
 
-        device_choice = _determine_device(settings.device)
-        try:
-            model = _get_model(device_choice)
-        except RuntimeError as exc:
-            raise HTTPException(
-                status_code=503,
-                detail={"code": "STT_UNAVAILABLE", "detail": str(exc)},
-            ) from exc
+        # Get device metadata for metrics
         meta = get_device_metadata()
-        effective_device = meta.get("effective", device_choice)
+        effective_device = meta.get("effective", "unknown")
         metrics["device_fallback_reason"] = meta.get("fallback_reason")
 
         noise_ms = 0.0
@@ -116,19 +109,36 @@ async def speak_http(
                 logger.debug("Noise suppression skipped: {}", exc)
             noise_ms = noise_span.duration_ms
 
+        # Use STT provider manager for transcription
         span_stt = Span()
-        segments_iter, _ = model.transcribe(
-            str(wav_path),
-            language=language,
-            vad_filter=True,
-            beam_size=5,
-            word_timestamps=False,
-        )
-        stt_ms = span_stt.duration_ms
-        span_norm = Span()
-        _, final_text, term_changes = _prepare_segments(segments_iter, include_words=False)
-        norm_ms = span_norm.duration_ms
-        terms_summary = summarize_term_changes(term_changes)
+        try:
+            stt_manager = get_stt_manager()
+            result = stt_manager.transcribe(
+                wav_path,
+                language=language,
+                timestamps=False,
+            )
+            stt_ms = span_stt.duration_ms
+
+            # Extract results
+            final_text = result.get("text", "")
+            used_provider = result.get("provider", "unknown")
+
+            # Apply term normalization if needed
+            span_norm = Span()
+            term_changes = []
+            if settings.terms_file and final_text:
+                from .textnorm import apply_terms
+                final_text, term_changes = apply_terms(final_text, settings)
+            norm_ms = span_norm.duration_ms
+            terms_summary = summarize_term_changes(term_changes)
+
+        except STTProviderError as exc:
+            logger.error("STT provider error: {}", exc)
+            raise HTTPException(
+                status_code=503,
+                detail={"code": "STT_UNAVAILABLE", "detail": str(exc)},
+            ) from exc
 
         if not final_text or len(final_text) < settings.min_chars:
             raise HTTPException(
@@ -170,9 +180,9 @@ async def speak_http(
                 metrics["retries"] = 0
                 metrics.update(
                     {
-                        "device": effective_device or device_choice,
-                        "compute_type": getattr(model, "compute_type", None),
-                        "model": MODEL_NAME,
+                        "device": effective_device,
+                        "provider": used_provider,
+                        "model": result.get("model", "unknown"),
                         "decode_ms": round(decode_ms, 2),
                         "noise_ms": round(noise_ms, 2),
                         "vad_ms": 0.0,

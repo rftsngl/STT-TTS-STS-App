@@ -7,4 +7,8 @@ def test_health(http_client):
     payload = resp.json()
     assert isinstance(payload, dict)
     assert "status" in payload
-    assert payload.get("status") == "ok"
+    # Status can be "healthy" or "degraded" depending on API key configuration
+    assert payload.get("status") in ["healthy", "degraded"]
+    # Ensure elevenlabs status is present
+    assert "elevenlabs" in payload
+    assert "status" in payload["elevenlabs"]

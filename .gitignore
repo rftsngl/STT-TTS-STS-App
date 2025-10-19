@@ -1,4 +1,28 @@
+# ============================================================================
+# .gitignore - STT-TTS-STS Application
+# ============================================================================
+# This file excludes unnecessary files from version control to keep the
+# repository clean and minimal for public distribution.
+#
+# INCLUDED (tracked by git):
+#   - Source code (.py, .ts, .tsx)
+#   - Configuration templates (.env.example)
+#   - Documentation (README.md, DEPLOYMENT_GUIDE.md)
+#   - Package files (requirements.txt, package.json)
+#   - Essential data files (data/terms.json, data/voice_aliases.json)
+#
+# EXCLUDED (not tracked by git):
+#   - Database files (.db)
+#   - Environment files with secrets (.env)
+#   - Build artifacts and compiled files
+#   - IDE/editor specific files
+#   - Logs, cache, temporary files
+#   - User-specific data
+# ============================================================================
+
+# ----------------------------------------------------------------------------
 # Python
+# ----------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
@@ -21,7 +45,9 @@ wheels/
 *.egg
 MANIFEST
 
-# Virtual Environment
+# ----------------------------------------------------------------------------
+# Virtual Environments
+# ----------------------------------------------------------------------------
 venv/
 env/
 ENV/
@@ -29,14 +55,21 @@ env.bak/
 venv.bak/
 .venv/
 
-# IDE
+# ----------------------------------------------------------------------------
+# IDE & Editors
+# ----------------------------------------------------------------------------
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.project
+.classpath
+.settings/
 
-# OS
+# ----------------------------------------------------------------------------
+# Operating System
+# ----------------------------------------------------------------------------
 .DS_Store
 .DS_Store?
 ._*
@@ -44,38 +77,76 @@ venv.bak/
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Logs
+# ----------------------------------------------------------------------------
+# Logs & Reports
+# ----------------------------------------------------------------------------
 *.log
 logs/
 app/logs/
 reports/
+*.log.*
 
-# Temporary files
-_tmp_*.py
+# ----------------------------------------------------------------------------
+# Temporary Files
+# ----------------------------------------------------------------------------
+_tmp_*
 *.tmp
 *.temp
+*.cache
 
-# Audio files (test files)
+# ----------------------------------------------------------------------------
+# Audio Files (test/temporary files)
+# ----------------------------------------------------------------------------
+# Exclude all audio files except essential samples
 *.wav
 *.mp3
 *.m4a
 *.flac
 *.ogg
+*.aac
+*.wma
 tests/*.mp3
 tests/*.wav
 
-# Environment files
+# ----------------------------------------------------------------------------
+# Environment Files
+# ----------------------------------------------------------------------------
+# Exclude all .env files except .env.example
 .env
 .env.local
 .env.*.local
+.env.*.bak
 
-# Backup files
+# Include .env.example (template for users)
+!.env.example
+
+# ----------------------------------------------------------------------------
+# Database Files (contain user data and encrypted API keys)
+# ----------------------------------------------------------------------------
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/speech_app.db
+
+# ----------------------------------------------------------------------------
+# Backup Files
+# ----------------------------------------------------------------------------
 *.backup
 *.bak
 *.old
+*~
 
-# Test coverage
+# ----------------------------------------------------------------------------
+# Test Coverage
+# ----------------------------------------------------------------------------
 htmlcov/
 .coverage
 .coverage.*
@@ -83,44 +154,106 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+.tox/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# pyenv
-.python-version
-
-# pipenv
-Pipfile.lock
-
-# PEP 582
-__pypackages__/
-
-# Celery
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
+# ----------------------------------------------------------------------------
+# Python Type Checkers
+# ----------------------------------------------------------------------------
 .mypy_cache/
 .dmypy.json
 dmypy.json
-
-# Pyre type checker
 .pyre/
+.pytype/
 
-# Project specific
-ui/
+# ----------------------------------------------------------------------------
+# Python Version Management
+# ----------------------------------------------------------------------------
+.python-version
+.pyenv
+
+# ----------------------------------------------------------------------------
+# Python Package Managers
+# ----------------------------------------------------------------------------
+Pipfile.lock
+poetry.lock
+pdm.lock
+
+# ----------------------------------------------------------------------------
+# PEP 582
+# ----------------------------------------------------------------------------
+__pypackages__/
+
+# ----------------------------------------------------------------------------
+# Jupyter Notebook
+# ----------------------------------------------------------------------------
+.ipynb_checkpoints
+*.ipynb
+
+# ----------------------------------------------------------------------------
+# Celery
+# ----------------------------------------------------------------------------
+celerybeat-schedule
+celerybeat.pid
+
+# ----------------------------------------------------------------------------
+# SageMath
+# ----------------------------------------------------------------------------
+*.sage.py
+
+# ----------------------------------------------------------------------------
+# Spyder IDE
+# ----------------------------------------------------------------------------
+.spyderproject
+.spyproject
+
+# ----------------------------------------------------------------------------
+# Rope IDE
+# ----------------------------------------------------------------------------
+.ropeproject
+
+# ----------------------------------------------------------------------------
+# mkdocs
+# ----------------------------------------------------------------------------
+/site
+
+# ----------------------------------------------------------------------------
+# Node.js / npm (for future frontend development)
+# ----------------------------------------------------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+package-lock.json
+yarn.lock
+
+# ----------------------------------------------------------------------------
+# React Native / Mobile App
+# ----------------------------------------------------------------------------
+# Include mobile app source code, but exclude dependencies and build artifacts
+ui/SpeechApp/node_modules/
+ui/SpeechApp/android/app/build/
+ui/SpeechApp/android/.gradle/
+ui/SpeechApp/android/.idea/
+ui/SpeechApp/android/local.properties
+ui/SpeechApp/ios/Pods/
+ui/SpeechApp/ios/build/
+ui/SpeechApp/.expo/
+ui/SpeechApp/.expo-shared/
+ui/SpeechApp/metro-cache/
+ui/SpeechApp/.bundle/
+
+# ----------------------------------------------------------------------------
+# Project Specific
+# ----------------------------------------------------------------------------
+# Exclude any Julia files (if accidentally created)
 *.jl
+
+# Exclude compiled Python files
+*.pyc
+
+# Exclude any personal notes or drafts
+NOTES.md
+DRAFT*.md
+TODO.md

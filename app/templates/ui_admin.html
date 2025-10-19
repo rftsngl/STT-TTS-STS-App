@@ -147,7 +147,7 @@
       stroke-width: 2;
     }
 
-    /* Main Content */
+    /* Main Content - Add padding for fixed footer */
     .main-content {
       flex: 1;
       margin-left: var(--sidebar-width);
@@ -156,6 +156,7 @@
       flex-direction: column;
       width: calc(100% - var(--sidebar-width));
       overflow-x: hidden;
+      padding-bottom: 60px; /* Space for fixed footer */
     }
 
     .topbar {
@@ -211,6 +212,22 @@
       overflow-y: auto;
     }
 
+    /* Page transition animations */
+    .page {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     .page-title {
       font-size: 24px;
       font-weight: 600;
@@ -229,6 +246,12 @@
       border-radius: 12px;
       padding: 20px;
       margin-bottom: 20px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     .card-header {
@@ -278,6 +301,13 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+      border-color: var(--accent);
     }
 
     .stat-label {
@@ -336,6 +366,8 @@
 
     .btn-primary:hover:not(:disabled) {
       background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
     }
 
     .btn-secondary {
@@ -346,6 +378,8 @@
 
     .btn-secondary:hover:not(:disabled) {
       background: var(--border);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
     .btn-success {
@@ -442,6 +476,13 @@
       cursor: pointer;
     }
 
+    .form-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: block;
+    }
+
     /* Table */
     .table-container {
       overflow-x: auto;
@@ -449,7 +490,7 @@
       border: 1px solid var(--border);
     }
 
-    table {
+    table, .data-table {
       width: 100%;
       border-collapse: collapse;
     }
@@ -818,6 +859,18 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       transition: all 0.3s ease;
       opacity: 1;
+      animation: slideInDown 0.4s ease-out;
+    }
+
+    @keyframes slideInDown {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
     }
 
     .alert-close {
@@ -869,7 +922,11 @@
       color: var(--info);
     }
 
-    /* Login Page Styles */
+    /* Login Page Styles - Hidden (users use topbar API key form instead) */
+    #page-login {
+      display: none !important;
+    }
+
     .login-container {
       display: flex;
       justify-content: center;
@@ -1148,7 +1205,7 @@
       gap: 8px;
     }
 
-    /* Footer Status Bar */
+    /* Footer Status Bar - Fixed at bottom */
     .footer-bar {
       background: var(--bg-secondary);
       border-top: 2px solid var(--success);
@@ -1159,9 +1216,12 @@
       gap: 16px;
       font-size: 12px;
       color: var(--text-secondary);
-      position: sticky;
+      position: fixed;
       bottom: 0;
-      z-index: 100;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
     }
 
     .footer-item {
@@ -1436,6 +1496,10 @@
             <i data-feather="settings"></i>
             <span>Yapılandırma</span>
           </a>
+          <a class="nav-item" data-page="stt-config">
+            <i data-feather="message-square"></i>
+            <span>STT & Veritabanı</span>
+          </a>
           <a class="nav-item" data-page="security">
             <i data-feather="shield"></i>
             <span>Güvenlik</span>
@@ -1550,6 +1614,32 @@
               </div>
               <div class="stat-label">STT Cihazı</div>
               <div class="stat-value" id="stt-device">-</div>
+            </div>
+          </div>
+
+          <div class="grid grid-3 mt-4">
+            <div class="stat-card">
+              <div class="stat-icon primary">
+                <i data-feather="message-square"></i>
+              </div>
+              <div class="stat-label">STT Sağlayıcı</div>
+              <div class="stat-value" id="dashboard-stt-provider">-</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon success">
+                <i data-feather="database"></i>
+              </div>
+              <div class="stat-label">Veritabanı</div>
+              <div class="stat-value" id="dashboard-db-status">-</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon info">
+                <i data-feather="shield"></i>
+              </div>
+              <div class="stat-label">STT Fallback</div>
+              <div class="stat-value" id="dashboard-fallback">-</div>
             </div>
           </div>
 
@@ -2130,8 +2220,8 @@
                   Abonelik Detayları
                 </div>
               </div>
-              <div class="card-body">
-                <pre id="subscription-output">Yükleniyor...</pre>
+              <div class="card-body" id="subscription-output">
+                <p class="text-center">Yükleniyor...</p>
               </div>
             </div>
 
@@ -2363,6 +2453,7 @@
             </div>
           </div>
 
+          <!-- CUDA/GPU support disabled - CPU only -->
           <div class="card mt-4">
             <div class="card-header">
               <div class="card-title">
@@ -2371,15 +2462,156 @@
               </div>
             </div>
             <div class="card-body">
-              <div class="grid grid-2">
-                <button class="btn btn-primary" id="set-device-cpu-btn">
-                  <i data-feather="cpu"></i>
-                  CPU Kullan
-                </button>
-                <button class="btn btn-primary" id="set-device-gpu-btn">
-                  <i data-feather="zap"></i>
-                  GPU/CUDA Kullan
-                </button>
+              <div class="alert alert-info">
+                <i data-feather="info"></i>
+                <strong>Bilgi:</strong> Uygulama sadece CPU modunda çalışmaktadır. CUDA/GPU desteği devre dışı bırakılmıştır.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STT & Database Configuration Page -->
+        <div class="page hidden" id="page-stt-config">
+          <h1 class="page-title">STT & Veritabanı Yapılandırması</h1>
+          <p class="page-subtitle">Speech-to-Text sağlayıcı ayarları ve API key yönetimi</p>
+
+          <!-- STT Provider Status -->
+          <div class="grid grid-4">
+            <div class="stat-card">
+              <div class="stat-icon primary">
+                <i data-feather="message-square"></i>
+              </div>
+              <div class="stat-label">Aktif STT Sağlayıcı</div>
+              <div class="stat-value" id="active-stt-provider">-</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon success">
+                <i data-feather="database"></i>
+              </div>
+              <div class="stat-label">Veritabanı Durumu</div>
+              <div class="stat-value" id="db-status">-</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon info">
+                <i data-feather="key"></i>
+              </div>
+              <div class="stat-label">Kayıtlı API Keyler</div>
+              <div class="stat-value" id="stored-keys-count">0</div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon warning">
+                <i data-feather="shield"></i>
+              </div>
+              <div class="stat-label">Fallback Durumu</div>
+              <div class="stat-value" id="fallback-status">-</div>
+            </div>
+          </div>
+
+          <!-- STT Provider Selection -->
+          <div class="card mt-4">
+            <div class="card-header">
+              <div class="card-title">
+                <i data-feather="message-square"></i>
+                STT Sağlayıcı Seçimi
+              </div>
+              <button class="btn btn-secondary btn-sm" id="refresh-stt-config-btn">
+                <i data-feather="refresh-cw"></i>
+                Yenile
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">STT Sağlayıcı</label>
+                <select class="form-control" id="stt-provider-select" disabled>
+                  <option value="elevenlabs" selected>ElevenLabs (Bulut)</option>
+                </select>
+                <small class="form-text">Sadece ElevenLabs STT desteklenmektedir</small>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">ElevenLabs STT API Key</label>
+                <input type="password" class="form-control" id="elevenlabs-stt-key" placeholder="sk_..." />
+                <small class="form-text">ElevenLabs STT kullanmak için gerekli (TTS API key ile aynı olabilir)</small>
+              </div>
+
+              <button class="btn btn-primary" id="save-stt-config-btn">
+                <i data-feather="save"></i>
+                STT Ayarlarını Kaydet
+              </button>
+            </div>
+          </div>
+
+          <!-- Database Configuration -->
+          <div class="card mt-4">
+            <div class="card-header">
+              <div class="card-title">
+                <i data-feather="database"></i>
+                Veritabanı Yapılandırması
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Veritabanı Yolu</label>
+                <input type="text" class="form-control" id="database-path" placeholder="./data/speech_app.db" />
+                <small class="form-text">SQLite veritabanı dosyasının konumu</small>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Şifreleme Anahtarı</label>
+                <input type="password" class="form-control" id="encryption-key" placeholder="Fernet encryption key" />
+                <small class="form-text">API keylerini şifrelemek için kullanılır (Fernet formatı)</small>
+              </div>
+
+              <div class="alert alert-warning">
+                <i data-feather="alert-triangle"></i>
+                <div>
+                  <strong>Uyarı:</strong> Şifreleme anahtarını değiştirmek mevcut API keylerini okunamaz hale getirir.
+                  Anahtarı güvenli bir yerde saklayın.
+                </div>
+              </div>
+
+              <button class="btn btn-primary" id="save-db-config-btn">
+                <i data-feather="save"></i>
+                Veritabanı Ayarlarını Kaydet
+              </button>
+            </div>
+          </div>
+
+          <!-- API Key Management -->
+          <div class="card mt-4">
+            <div class="card-header">
+              <div class="card-title">
+                <i data-feather="key"></i>
+                API Key Yönetimi
+              </div>
+              <button class="btn btn-primary btn-sm" id="add-api-key-btn">
+                <i data-feather="plus"></i>
+                Yeni Key Ekle
+              </button>
+            </div>
+            <div class="card-body">
+              <div id="api-keys-table-container">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Sağlayıcı</th>
+                      <th>Key Adı</th>
+                      <th>Oluşturulma</th>
+                      <th>Durum</th>
+                      <th>İşlemler</th>
+                    </tr>
+                  </thead>
+                  <tbody id="api-keys-table-body">
+                    <tr>
+                      <td colspan="5" style="text-align: center; color: var(--text-muted);">
+                        Yükleniyor...
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -2504,21 +2736,17 @@
       isAuthenticated: false
     };
 
-    // Check authentication status
+    // Skip authentication - always show main interface
+    // Users can enter API key via topbar form
     console.log('API Key from sessionStorage:', state.apiKey);
     console.log('ElevenLabs Key from sessionStorage:', state.elevenlabsKey);
-    
+
+    // Always show main interface (no login required)
+    state.isAuthenticated = true;
+    showMainInterface();
+
     // Check API status on page load
     checkElevenLabsKeyStatus();
-    
-    // Check if we have a valid ElevenLabs API key for login
-    if (state.elevenlabsKey && state.elevenlabsKey.trim() !== '' && state.elevenlabsKey.startsWith('sk_')) {
-      state.isAuthenticated = true;
-      showMainInterface();
-    } else {
-      console.log('No valid ElevenLabs API key found, showing login page');
-      showLoginPage();
-    }
 
     function showLoginPage() {
       document.getElementById('page-login').classList.remove('hidden');
@@ -2545,25 +2773,26 @@
       try {
         const response = await apiRequest('/ui/api/config/elevenlabs-key');
         const apiStatusElement = document.getElementById('footer-api-status');
-        
+
         if (response.configured && response.has_valid_format) {
           apiStatusElement.textContent = 'Bağlı';
           apiStatusElement.style.color = '#10b981'; // green
-          showAlert('ElevenLabs API key yapılandırılmış ve geçerli!', 'success');
+          showAlert('✅ ElevenLabs API key yapılandırılmış ve geçerli!', 'success');
         } else if (response.configured) {
           apiStatusElement.textContent = 'Geçersiz';
           apiStatusElement.style.color = '#f59e0b'; // yellow
-          showAlert('ElevenLabs API key yapılandırılmış ancak geçersiz format!', 'warning');
+          showAlert('⚠️ ElevenLabs API key geçersiz format! Lütfen üst menüdeki "API Keys" bölümünden doğru formatta bir key girin (sk_ ile başlamalı).', 'warning');
         } else {
           apiStatusElement.textContent = 'Bağlı Değil';
           apiStatusElement.style.color = '#ef4444'; // red
-          showAlert('ElevenLabs API key yapılandırılmamış. Lütfen API key\'inizi girin.', 'info');
+          showAlert('🔑 ElevenLabs API key bulunamadı. Lütfen üst menüdeki "API Keys" bölümünden API key\'inizi ekleyin. <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" style="color: var(--primary); text-decoration: underline;">Buradan</a> API key alabilirsiniz.', 'info');
         }
       } catch (error) {
         const apiStatusElement = document.getElementById('footer-api-status');
         apiStatusElement.textContent = 'Hata';
         apiStatusElement.style.color = '#f59e0b'; // yellow
         console.log('ElevenLabs API key durumu kontrol edilemedi:', error.message);
+        // Don't show alert for errors during status check to avoid spam
       }
     }
 
@@ -2603,14 +2832,22 @@
       if (!response.ok) {
         const error = await response.text();
         let errorMessage = `HTTP ${response.status}: ${error}`;
-        
-        // Admin key ile ilgili hataları API key ile ilgili hatalara çevir
+
+        // Kullanıcı dostu hata mesajları - API key ile ilgili hatalar
         if (response.status === 403 && error.includes('ADMIN_DISABLED')) {
-          errorMessage = 'Bu işlem için API key gerekli. Lütfen API key\'inizi girin.';
+          errorMessage = '⚠️ Bu işlem için ElevenLabs API key gerekli. Lütfen üst menüdeki "API Keys" bölümünden API key\'inizi ekleyin.';
         } else if (response.status === 401 && error.includes('UNAUTHORIZED')) {
-          errorMessage = 'Geçersiz API key. Lütfen doğru API key\'i girin.';
+          errorMessage = '❌ Geçersiz API key. Lütfen üst menüdeki "API Keys" bölümünden doğru API key\'i girin.';
+        } else if (response.status === 401) {
+          errorMessage = '🔑 ElevenLabs API key bulunamadı veya geçersiz. Lütfen üst menüdeki "API Keys" bölümünden API key\'inizi ekleyin.';
+        } else if (response.status === 403) {
+          errorMessage = '🚫 Erişim reddedildi. Lütfen API key\'inizin geçerli olduğundan emin olun.';
+        } else if (response.status === 429) {
+          errorMessage = '⏱️ API kullanım limiti aşıldı. Lütfen birkaç dakika sonra tekrar deneyin.';
+        } else if (response.status === 500) {
+          errorMessage = '⚠️ Sunucu hatası. Lütfen daha sonra tekrar deneyin.';
         }
-        
+
         throw new Error(errorMessage);
       }
       const contentType = response.headers.get('content-type');
@@ -2664,22 +2901,8 @@
             </div>
           </div>
           
-          <div class="info-section">
-            <h4><i data-feather="cpu"></i> CUDA Bilgileri</h4>
-            <div class="info-item">
-              <span class="info-label">CUDA Cihaz Sayısı:</span>
-              <span class="info-value">${data.cuda_device_count || 0}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">CTranslate2 CUDA:</span>
-              <span class="info-value ${data.ctranslate2_cuda ? 'status-ok' : 'status-warning'}">${cudaStatus}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Torch CUDA:</span>
-              <span class="info-value ${data.torch_cuda ? 'status-ok' : 'status-warning'}">${torchCudaStatus}</span>
-            </div>
-          </div>
-          
+          <!-- CUDA information removed - CUDA support disabled -->
+
           <div class="info-section">
             <h4><i data-feather="code"></i> Yazılım Bilgileri</h4>
             <div class="info-item">
@@ -3284,6 +3507,9 @@
         case 'settings':
           await loadConfig();
           break;
+        case 'stt-config':
+          await loadSTTConfig();
+          break;
         case 'security':
           await loadSecurity();
           break;
@@ -3340,11 +3566,26 @@
         // STT device
         const device = health.device || 'N/A';
         document.getElementById('stt-device').textContent = device;
-        
+
         // Update footer
         document.getElementById('footer-device').textContent = device;
         document.getElementById('footer-voices-count').textContent = voiceCount;
-        
+
+        // Load STT provider info (Faster-Whisper disabled, only ElevenLabs)
+        try {
+          const config = await apiRequest('/ui/api/config/read');
+          const sttProvider = config.stt_provider || 'elevenlabs';
+
+          document.getElementById('dashboard-stt-provider').textContent = 'ElevenLabs';
+          document.getElementById('dashboard-db-status').textContent = 'Aktif';
+          document.getElementById('dashboard-fallback').textContent = 'Pasif';
+        } catch (e) {
+          console.error('Failed to load STT config:', e);
+          document.getElementById('dashboard-stt-provider').textContent = '?';
+          document.getElementById('dashboard-db-status').textContent = '?';
+          document.getElementById('dashboard-fallback').textContent = '?';
+        }
+
       } catch (error) {
         document.getElementById('health-output').innerHTML = `<div class="error-message">Hata: ${error.message}</div>`;
       }
@@ -4229,15 +4470,24 @@
     // Terms Functions
     async function loadTerms() {
       try {
-        const terms = await apiRequest('/ui/api/terms/list');
+        const response = await apiRequest('/ui/api/terms/list');
         const tbody = document.getElementById('terms-tbody');
         tbody.innerHTML = '';
-        
-        if (!terms || terms.length === 0) {
+
+        // Validate that response is an array
+        if (!response) {
           tbody.innerHTML = '<tr><td colspan="5" class="text-center">Terim bulunamadı.</td></tr>';
           return;
         }
-        
+
+        // Handle both array and object responses
+        let terms = Array.isArray(response) ? response : (response.terms || []);
+
+        if (!Array.isArray(terms) || terms.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-center">Terim bulunamadı.</td></tr>';
+          return;
+        }
+
         terms.forEach(term => {
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -4253,9 +4503,11 @@
           `;
           tbody.appendChild(row);
         });
-        
+
         feather.replace();
       } catch (error) {
+        const tbody = document.getElementById('terms-tbody');
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Hata: ${error.message}</td></tr>`;
         showAlert(`Terimler yüklenemedi: ${error.message}`, 'danger');
       }
     }
@@ -4280,37 +4532,76 @@
     async function loadSubscription() {
       try {
         const subscription = await apiRequest('/ui/api/subscription');
-        showJSON('subscription-output', subscription);
-        
+
+        // Format subscription details nicely instead of JSON
+        const subscriptionOutput = document.getElementById('subscription-output');
+        subscriptionOutput.innerHTML = `
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div class="info-item">
+              <span class="info-label"><i data-feather="user" style="width: 16px; height: 16px;"></i> Plan Türü:</span>
+              <span class="info-value"><strong>${subscription.tier || 'Bilinmiyor'}</strong></span>
+            </div>
+            <div class="info-item">
+              <span class="info-label"><i data-feather="calendar" style="width: 16px; height: 16px;"></i> Durum:</span>
+              <span class="info-value ${subscription.status === 'active' ? 'status-ok' : 'status-warning'}">
+                ${subscription.status === 'active' ? 'Aktif' : subscription.status || 'Bilinmiyor'}
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label"><i data-feather="zap" style="width: 16px; height: 16px;"></i> Karakter Limiti:</span>
+              <span class="info-value">${subscription.character_limit ? subscription.character_limit.toLocaleString() : 'Sınırsız'}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label"><i data-feather="mic" style="width: 16px; height: 16px;"></i> Ses Klonlama Limiti:</span>
+              <span class="info-value">${subscription.voice_limit || 'Sınırsız'}</span>
+            </div>
+            ${subscription.next_character_count_reset_unix ? `
+            <div class="info-item">
+              <span class="info-label"><i data-feather="clock" style="width: 16px; height: 16px;"></i> Kota Sıfırlama:</span>
+              <span class="info-value">${new Date(subscription.next_character_count_reset_unix * 1000).toLocaleDateString('tr-TR')}</span>
+            </div>
+            ` : ''}
+          </div>
+        `;
+        feather.replace();
+
         // Kota kartları
         const quotaContainer = document.getElementById('quota-cards');
         quotaContainer.innerHTML = '';
-        
+
         if (subscription.character_count !== undefined) {
-          const usedPct = subscription.character_limit > 0 
-            ? Math.round((subscription.character_count / subscription.character_limit) * 100) 
+          const usedPct = subscription.character_limit > 0
+            ? Math.round((subscription.character_count / subscription.character_limit) * 100)
             : 0;
-          
+          const remaining = subscription.character_limit - subscription.character_count;
+
           quotaContainer.innerHTML = `
             <div class="stat-card">
+              <div class="stat-icon ${usedPct > 80 ? 'danger' : 'success'}">
+                <i data-feather="activity"></i>
+              </div>
               <div class="stat-label">Kullanılan Karakter</div>
               <div class="stat-value">${subscription.character_count.toLocaleString()}</div>
               <div style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">
                 Limit: ${subscription.character_limit.toLocaleString()} (${usedPct}%)
               </div>
-              <div style="margin-top: 8px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;">
-                <div style="width: ${usedPct}%; height: 100%; background: ${usedPct > 80 ? 'var(--danger)' : 'var(--success)'};"></div>
+              <div style="margin-top: 8px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;">
+                <div style="width: ${usedPct}%; height: 100%; background: ${usedPct > 80 ? 'var(--danger)' : usedPct > 50 ? 'var(--warning)' : 'var(--success)'}; transition: width 0.3s ease;"></div>
               </div>
             </div>
-            
+
             <div class="stat-card">
-              <div class="stat-label">Klonlanmış Sesler</div>
-              <div class="stat-value">${subscription.voice_limit || 'Sınırsız'}</div>
+              <div class="stat-icon primary">
+                <i data-feather="check-circle"></i>
+              </div>
+              <div class="stat-label">Kalan Karakter</div>
+              <div class="stat-value">${remaining > 0 ? remaining.toLocaleString() : '0'}</div>
               <div style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">
                 Plan: ${subscription.tier || 'N/A'}
               </div>
             </div>
           `;
+          feather.replace();
         }
         
         // Modeller
@@ -4482,33 +4773,128 @@
     }
 
     document.getElementById('refresh-config-btn').addEventListener('click', loadConfig);
-    
-    document.getElementById('set-device-cpu-btn').addEventListener('click', async () => {
+
+    // CUDA/GPU buttons removed - CPU only mode
+
+    // STT Configuration Functions (Faster-Whisper disabled, only ElevenLabs)
+    async function loadSTTConfig() {
       try {
+        // Load current configuration
+        const config = await apiRequest('/ui/api/config/read');
+
+        // Update STT provider status cards (always ElevenLabs)
+        const sttProvider = 'elevenlabs';
+        const dbPath = config.database_path || './data/speech_app.db';
+
+        // Update stat cards
+        document.getElementById('active-stt-provider').textContent = 'ElevenLabs';
+        document.getElementById('db-status').textContent = 'Aktif';
+        document.getElementById('fallback-status').textContent = 'Pasif';
+
+        // Update dashboard stat cards
+        document.getElementById('dashboard-stt-provider').textContent = 'ElevenLabs';
+        document.getElementById('dashboard-db-status').textContent = 'Aktif';
+        document.getElementById('dashboard-fallback').textContent = 'Pasif';
+
+        // Update form fields
+        document.getElementById('stt-provider-select').value = 'elevenlabs';
+        document.getElementById('elevenlabs-stt-key').value = config.elevenlabs_stt_api_key || '';
+        document.getElementById('database-path').value = dbPath;
+        document.getElementById('encryption-key').value = config.encryption_key || '';
+
+        // Fallback provider visibility toggle removed - fallback functionality disabled
+
+        // Load API keys (mock data for now - would need backend endpoint)
+        await loadAPIKeys();
+
+      } catch (error) {
+        showAlert(`STT yapılandırması yüklenemedi: ${error.message}`, 'danger');
+      }
+    }
+
+    async function loadAPIKeys() {
+      const tbody = document.getElementById('api-keys-table-body');
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">API key yönetimi için backend endpoint gerekli</td></tr>';
+
+      // Mock data for demonstration
+      const mockKeys = [
+        {
+          provider: 'elevenlabs',
+          key_name: 'ElevenLabs STT',
+          created_at: '2025-01-15',
+          is_active: true
+        }
+      ];
+
+      document.getElementById('stored-keys-count').textContent = mockKeys.length;
+
+      // Would populate table with real data from backend
+      // tbody.innerHTML = '';
+      // mockKeys.forEach(key => {
+      //   const row = document.createElement('tr');
+      //   row.innerHTML = `
+      //     <td>${key.provider}</td>
+      //     <td>${key.key_name}</td>
+      //     <td>${key.created_at}</td>
+      //     <td><span class="badge ${key.is_active ? 'badge-success' : 'badge-secondary'}">${key.is_active ? 'Aktif' : 'Pasif'}</span></td>
+      //     <td>
+      //       <button class="btn btn-danger btn-sm" onclick="deleteAPIKey('${key.key_name}')">
+      //         <i data-feather="trash-2"></i>
+      //       </button>
+      //     </td>
+      //   `;
+      //   tbody.appendChild(row);
+      // });
+      // feather.replace();
+    }
+
+    // STT Configuration Event Listeners (Faster-Whisper disabled, only ElevenLabs)
+    document.getElementById('refresh-stt-config-btn').addEventListener('click', loadSTTConfig);
+
+    document.getElementById('save-stt-config-btn').addEventListener('click', async () => {
+      try {
+        const elevenlabsSTTKey = document.getElementById('elevenlabs-stt-key').value;
+
         await apiRequest('/ui/api/config/apply', {
           method: 'POST',
-          body: { device: 'cpu' }
+          body: {
+            stt_provider: 'elevenlabs',
+            elevenlabs_stt_api_key: elevenlabsSTTKey,
+            stt_fallback_enabled: false,
+            stt_fallback_provider: 'elevenlabs'
+          }
         });
-        showAlert('Cihaz CPU olarak ayarlandı!', 'success');
-        await loadConfig();
+
+        showAlert('STT ayarları başarıyla kaydedildi!', 'success');
+        await loadSTTConfig();
         await loadDashboard();
       } catch (error) {
         showAlert(`Hata: ${error.message}`, 'danger');
       }
     });
-    
-    document.getElementById('set-device-gpu-btn').addEventListener('click', async () => {
+
+    document.getElementById('save-db-config-btn').addEventListener('click', async () => {
       try {
+        const dbPath = document.getElementById('database-path').value;
+        const encryptionKey = document.getElementById('encryption-key').value;
+
         await apiRequest('/ui/api/config/apply', {
           method: 'POST',
-          body: { device: 'cuda' }
+          body: {
+            database_path: dbPath,
+            encryption_key: encryptionKey
+          }
         });
-        showAlert('Cihaz GPU/CUDA olarak ayarlandı!', 'success');
-        await loadConfig();
-        await loadDashboard();
+
+        showAlert('Veritabanı ayarları başarıyla kaydedildi!', 'success');
+        await loadSTTConfig();
       } catch (error) {
         showAlert(`Hata: ${error.message}`, 'danger');
       }
+    });
+
+    document.getElementById('add-api-key-btn').addEventListener('click', () => {
+      showAlert('API key ekleme özelliği yakında eklenecek', 'info');
     });
 
     // Security Functions

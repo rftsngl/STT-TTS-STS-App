@@ -49,7 +49,8 @@ def _as_float(value: str | float | int | None, default: float) -> float:
 
 
 class Settings(BaseModel):
-    device: Literal["auto", "cuda", "cpu"] = Field(default="auto")
+    # CUDA/GPU support disabled - always use CPU
+    device: Literal["auto", "cuda", "cpu"] = Field(default="cpu")
     bind_host: str = Field(default="127.0.0.1")
     port: int = Field(default=8000)
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(default="INFO")
@@ -59,7 +60,9 @@ class Settings(BaseModel):
     vad_aggressiveness: int = Field(default=2)
     endpoint_silence_ms: int = Field(default=350)
     partial_interval_ms: int = Field(default=500)
-    xi_api_key: str = Field(default="sk_64a1a5c52372e5b985871e259b512dd5206281e9433e3235")
+    # ElevenLabs API key - should be provided by user via environment variable
+    # Hardcoded key removed for security - use XI_API_KEY environment variable
+    xi_api_key: str = Field(default="")
     eleven_model_id: str = Field(default="eleven_flash_v2_5")
     eleven_output_format: str = Field(default="mp3_22050_32")
     eleven_default_voice_id: str = Field(default="")
@@ -71,9 +74,6 @@ class Settings(BaseModel):
     ns_strength: Literal["low", "medium", "high"] = Field(default="medium")
     log_metrics: bool = Field(default=True)
     metrics_jl_path: str = Field(default="app/logs/metrics.jl")
-    backoff_retries: int = Field(default=3)
-    backoff_base_ms: int = Field(default=250)
-    backoff_max_ms: int = Field(default=3000)
     terms_file: str = Field(default="data/terms.json")
     terms_apply_to_partials: bool = Field(default=False)
     terms_case_sensitive: bool = Field(default=False)
@@ -93,47 +93,48 @@ class Settings(BaseModel):
     rate_limit_ip_rpm: int = Field(default=150)
     rate_bucket_burst: float = Field(default=2.0)
     security_protect_all: bool = Field(default=True)
-    enable_heartbeat: bool = Field(default=True)
     http_read_timeout_sec: int = Field(default=30)
     http_write_timeout_sec: int = Field(default=60)
     upstream_connect_timeout_sec: int = Field(default=6)
     upstream_read_timeout_sec: int = Field(default=25)
-    cb_failure_ratio: float = Field(default=0.5)
-    cb_window: int = Field(default=20)
-    cb_cooldown_ms: int = Field(default=15000)
-    cb_half_open_max: int = Field(default=2)
-    backoff_jitter_ms: int = Field(default=100)
+
+    # STT Provider Configuration - Faster-Whisper disabled, only ElevenLabs supported
+    stt_provider: Literal["elevenlabs", "faster-whisper"] = Field(default="elevenlabs")
+    elevenlabs_stt_api_key: str = Field(default="")
+    stt_fallback_enabled: bool = Field(default=False)
+    stt_fallback_provider: Literal["elevenlabs", "faster-whisper"] = Field(default="elevenlabs")
+
+    # Database Configuration
+    database_path: str = Field(default="./data/speech_app.db")
+    encryption_key: str = Field(default="")
 
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     _load_env()
     return Settings(
-        device=os.environ.get("DEVICE", "auto"),
+        device=os.environ.get("DEVICE", "cpu"),  # CUDA disabled, always use CPU
         bind_host=os.environ.get("BIND_HOST", "127.0.0.1"),
         port=os.environ.get("PORT", "8000"),
         log_level=os.environ.get("LOG_LEVEL", "INFO"),
         max_duration_seconds=os.environ.get("MAX_DURATION_SECONDS", "900"),
         default_language=os.environ.get("DEFAULT_LANGUAGE", "tr"),
         default_timestamps=os.environ.get("DEFAULT_TIMESTAMPS", "segments"),
-        vad_aggressiveness=os.environ.get("VAD_AGGRESSIVENESS", "1"),
-        endpoint_silence_ms=os.environ.get("ENDPOINT_SILENCE_MS", "500"),
-        partial_interval_ms=os.environ.get("PARTIAL_INTERVAL_MS", "300"),
+        vad_aggressiveness=os.environ.get("VAD_AGGRESSIVENESS", "2"),
+        endpoint_silence_ms=os.environ.get("ENDPOINT_SILENCE_MS", "350"),
+        partial_interval_ms=os.environ.get("PARTIAL_INTERVAL_MS", "500"),
         xi_api_key=os.environ.get("XI_API_KEY", ""),
         eleven_model_id=os.environ.get("ELEVEN_MODEL_ID", "eleven_flash_v2_5"),
         eleven_output_format=os.environ.get("ELEVEN_OUTPUT_FORMAT", "mp3_22050_32"),
         eleven_default_voice_id=os.environ.get("ELEVEN_DEFAULT_VOICE_ID", ""),
         eleven_default_voice_alias=os.environ.get("ELEVEN_DEFAULT_VOICE_ALIAS", ""),
         eleven_tts_language=os.environ.get("ELEVEN_TTS_LANGUAGE", "tr"),
-        min_utterance_ms=os.environ.get("MIN_UTTERANCE_MS", "300"),
-        min_chars=os.environ.get("MIN_CHARS", "3"),
+        min_utterance_ms=os.environ.get("MIN_UTTERANCE_MS", "700"),
+        min_chars=os.environ.get("MIN_CHARS", "6"),
         noise_suppressor=os.environ.get("NOISE_SUPPRESSOR", "off"),
         ns_strength=os.environ.get("NS_STRENGTH", "medium"),
         log_metrics=_as_bool(os.environ.get("LOG_METRICS"), True),
         metrics_jl_path=os.environ.get("METRICS_JL_PATH", "app/logs/metrics.jl"),
-        backoff_retries=os.environ.get("BACKOFF_RETRIES", "3"),
-        backoff_base_ms=os.environ.get("BACKOFF_BASE_MS", "250"),
-        backoff_max_ms=os.environ.get("BACKOFF_MAX_MS", "3000"),
         terms_file=os.environ.get("TERMS_FILE", "data/terms.json"),
         terms_apply_to_partials=_as_bool(os.environ.get("TERMS_APPLY_TO_PARTIALS"), False),
         terms_case_sensitive=_as_bool(os.environ.get("TERMS_CASE_SENSITIVE"), False),
@@ -153,14 +154,14 @@ def get_settings() -> Settings:
         rate_limit_ip_rpm=os.environ.get("RATE_LIMIT_IP_RPM", "150"),
         rate_bucket_burst=os.environ.get("RATE_BUCKET_BURST", "2.0"),
         security_protect_all=_as_bool(os.environ.get("SECURITY_PROTECT_ALL"), True),
-        enable_heartbeat=_as_bool(os.environ.get("ENABLE_HEARTBEAT"), True),
         http_read_timeout_sec=os.environ.get("HTTP_READ_TIMEOUT_SEC", "30"),
         http_write_timeout_sec=os.environ.get("HTTP_WRITE_TIMEOUT_SEC", "60"),
         upstream_connect_timeout_sec=os.environ.get("UPSTREAM_CONNECT_TIMEOUT_SEC", "6"),
         upstream_read_timeout_sec=os.environ.get("UPSTREAM_READ_TIMEOUT_SEC", "25"),
-        cb_failure_ratio=_as_float(os.environ.get("CB_FAILURE_RATIO"), 0.5),
-        cb_window=os.environ.get("CB_WINDOW", "20"),
-        cb_cooldown_ms=os.environ.get("CB_COOLDOWN_MS", "15000"),
-        cb_half_open_max=os.environ.get("CB_HALF_OPEN_MAX", "2"),
-        backoff_jitter_ms=os.environ.get("BACKOFF_JITTER_MS", "100"),
+        stt_provider=os.environ.get("STT_PROVIDER", "elevenlabs"),  # Faster-Whisper disabled
+        elevenlabs_stt_api_key=os.environ.get("ELEVENLABS_STT_API_KEY", ""),
+        stt_fallback_enabled=_as_bool(os.environ.get("STT_FALLBACK_ENABLED"), False),  # Fallback disabled
+        stt_fallback_provider=os.environ.get("STT_FALLBACK_PROVIDER", "elevenlabs"),
+        database_path=os.environ.get("DATABASE_PATH", "./data/speech_app.db"),
+        encryption_key=os.environ.get("ENCRYPTION_KEY", ""),
     )
