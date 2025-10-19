@@ -17,7 +17,7 @@ noisereduce==3.0.3
 psutil==6.1.0
 
 # Database and encryption
-cryptography==42.0.5
+cryptography==44.0.1
 
 # TTS/STT providers
 elevenlabs==2.17.0
